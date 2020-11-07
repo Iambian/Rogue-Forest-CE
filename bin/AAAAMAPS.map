@@ -1,0 +1,102 @@
+Segment  Base   Top    High   Length
+-------- ------ ------ ------ -------
+icon     D1A882 D1A9A2           120h
+launcher D1A9A2 D1A9FA            58h
+libs     D1A9FA D1AA77            7Dh
+startup  D1AA77 D1AAB6            3Fh
+cleanup  D1AAB6 D1AACA            14h
+exit     D1AACA D1AAD0             6h
+code     D1AAD0 D1B968           E98h
+data     D1B968 D1D7F7          1E8Fh
+strsect  D1D7F7 D1D800             9h
+text     D1D800 D1D800             0h
+bss      D031F6 D03499 D13FD6    2A3h
+header   D1A87F D1A882             3h
+
+Label                          Value
+----------------------------   ------
+_os_DisableHomeTextBuffer    = D1AAD0
+_os_EnableHomeTextBuffer     = D1AAE2
+_srandom                     = D1AAF4
+__setstate                   = D1AAFB
+_random                      = D1AB0B
+__state                      = D1B968
+__frameset0                  = D1AB62
+__frameset                   = D1AB6D
+__imul_b                     = 000158
+__imul_b                     = 000150
+__s_sbrk                     = D1AB7B
+__ior                        = 000168
+__idivs                      = 00013C
+__iremu                      = 000170
+__icmpzero                   = 000138
+_srand                       = D1AB9B
+__setflag                    = 000218
+_malloc                      = D1ABD4
+__alloc_base                 = D031F6
+__findlibload                = D1A9A2
+__program_icon               = D1A887
+__program_description        = D1A989
+__ccleanup                   = D1AAB6
+_errno                       = D008DC
+_init                        = D1A882
+_exit                        = D1AACC
+__exit                       = D1AAA5
+__exitsp                     = D1AAA5
+__errsp                      = D1AAA5
+_areagfx_data                = D1B99D
+_base_palette                = D1BA2F
+_digitbar_btm_data           = D1BA4F
+_digitbar_top_data           = D1BC25
+_dungeon0_tiles_data         = D1C1FD
+_dungeon0_tile_3_data        = D1C0FB
+_dungeon0_tile_2_data        = D1BFF9
+_dungeon0_tile_1_data        = D1BEF7
+_dungeon0_tile_0_data        = D1BDF5
+_dungeon0_pal                = D1C209
+_floorgfx_data               = D1C211
+_hpmp_data                   = D1C2B5
+_xpfood_data                 = D1CD37
+_util_GetNumWidth            = D1B846
+_game_Initialize             = D1B753
+_disp_ShowSidebar            = D1B2E0
+_gen_SetMinimapColors        = D1B29F
+_gen_BufToTilemap            = D1B25F
+_gen_ResetAll                = D1B1F1
+_gen_TestDungeon             = D1AE00
+_dun0_tile2color             = D1D7F5
+_main                        = D1AC7C
+_tile2color                  = D03298
+_tilemap                     = D03286
+_curmap                      = D03283
+_totalgens                   = D03280
+_roomlist                    = D0321C
+_numrooms                    = D0321B
+_maxlevel_table              = D1D7B9
+_pstats                      = D031FC
+_asm_LoadMinimap             = D1B8C6
+_asm_SetTile2ColorStart      = D1B8BB
+_gfx_Begin                   = D1AA0D
+_gfx_End                     = D1AA11
+_gfx_SetColor                = D1AA15
+_gfx_SetPalette              = D1AA19
+_gfx_FillScreen              = D1AA1D
+_gfx_SetDraw                 = D1AA21
+_gfx_SwapDraw                = D1AA25
+_gfx_PrintChar               = D1AA29
+_gfx_PrintUInt               = D1AA2D
+_gfx_PrintString             = D1AA31
+_gfx_SetTextXY               = D1AA35
+_gfx_SetTextBGColor          = D1AA39
+_gfx_SetTextFGColor          = D1AA3D
+_gfx_SetTextTransparentColor = D1AA41
+_gfx_FillRectangle           = D1AA45
+_gfx_Line_NoClip             = D1AA49
+_gfx_Rectangle_NoClip        = D1AA4D
+_gfx_FillRectangle_NoClip    = D1AA51
+_gfx_Tilemap_NoClip          = D1AA55
+_gfx_AllocSprite             = D1AA59
+_gfx_Sprite_NoClip           = D1AA5D
+_gfx_GetSprite               = D1AA61
+_gfx_SetTransparentColor     = D1AA65
+_kb_Scan                     = D1AA73

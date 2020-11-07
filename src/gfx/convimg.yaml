@@ -1,0 +1,65 @@
+outputs:
+  - type: c
+    include-file: gfx_ui.h
+    directory: output
+    palettes:
+      - base_palette
+    converts:
+      - ui
+  - type: c
+    include-file: gfx_dun0.h
+    directory: output
+    palettes:
+      - dungeon0_pal
+    converts:
+      - dungeon0
+        
+palettes:
+  - name: base_palette
+    fixed-entries:
+      - color: {index: 0, r: 0, g: 0, b: 0}          #entry 0  - black
+      - color: {index: 1, r: 255, g: 255, b: 255}    #entry 1  - white
+      - color: {index: 2, r: 255, g: 0, b: 0}        #entry 2  - red
+      - color: {index: 3, r: 0, g: 255, b: 0}        #entry 3  - green
+      - color: {index: 4, r: 0, g: 0, b: 255}        #entry 4  - blue
+      - color: {index: 5, r: 255, g: 0, b: 220}      #entry 5  - hot pink (transparency)
+      - color: {index: 6, r: 128, g: 128, b: 128}    #entry 6  - gray
+      - color: {index: 7, r: 192, g: 192, b: 192}    #entry 7  - light gray
+      - color: {index: 8, r: 128, g: 160, b: 160}    #entry 8  - gunmetal(?) gray
+      - color: {index: 9, r: 255, g: 215, b: 0}      #entry 9  - gold/yellow
+      - color: {index: 10, r: 0, g: 255, b: 255}     #entry 10 - cyan
+      - color: {index: 11, r: 76, g: 255, b: 0}      #entry 11 - lime
+      - color: {index: 12, r: 255, g: 106, b: 0}     #entry 12 - orange
+      - color: {index: 13, r: 42, g: 128, b: 0}      #entry 13 - forest green
+      - color: {index: 14, r: 96, g: 96, b: 96}      #entry 14 - dark gray
+      - color: {index: 15, r: 128, g: 0, b: 128}     #entry 15 - purple
+    images: 
+      - uix/empty.png
+  - name: dungeon0_pal
+    images:
+      - tiles/dungeon0.png
+
+        
+converts:
+  - name: ui
+    palette: base_palette
+    palette-offset: 0
+    images:
+      - uix/xpfood.png
+      - uix/hpmp.png
+      - uix/digitbar_top.png
+      - uix/digitbar_btm.png
+      - uix/areagfx.png
+      - uix/floorgfx.png
+  - name: dungeon0
+    palette: dungeon0_pal
+    palette-offset: 16
+    tilesets:
+      tile-width: 16
+      tile-height: 16
+      images:
+        - tiles/dungeon0.png
+        
+        
+        
+        
