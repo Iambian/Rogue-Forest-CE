@@ -1,21 +1,46 @@
 outputs:
-  - type: c
-    include-file: gfx_ui.h
+  - type: appvar
+    name: RoFoDAT0
     directory: output
+    source-format: c
+    include-file: gfx_base.h
     palettes:
-      - base_palette
+      - base_pal
     converts:
       - ui
-  - type: c
-    include-file: gfx_dun0.h
+    
+  - type: appvar
+    name: RoFoDAT1
     directory: output
+    source-format: c
+    include-file: gfx_dtiles.h
     palettes:
-      - dungeon0_pal
+      - dtiles_pal
     converts:
-      - dungeon0
+      - dtiles
+  
+  - type: appvar
+    name: RoFoDAT2
+    directory: output
+    source-format: c
+    include-file: gfx_ftiles.h
+    palettes:
+      - ftiles_pal
+    converts:
+      - ftiles
+
+  - type: appvar
+    name: RoFoDAT3
+    directory: output
+    source-format: c
+    include-file: gfx_charequtiles.h
+    palettes:
+      - charequtiles_pal
+    converts:
+      - charequtiles
         
 palettes:
-  - name: base_palette
+  - name: base_pal
     fixed-entries:
       - color: {index: 0, r: 0, g: 0, b: 0}          #entry 0  - black
       - color: {index: 1, r: 255, g: 255, b: 255}    #entry 1  - white
@@ -33,33 +58,90 @@ palettes:
       - color: {index: 13, r: 42, g: 128, b: 0}      #entry 13 - forest green
       - color: {index: 14, r: 96, g: 96, b: 96}      #entry 14 - dark gray
       - color: {index: 15, r: 128, g: 0, b: 128}     #entry 15 - purple
-    images: 
-      - uix/empty.png
-  - name: dungeon0_pal
+  - name: dtiles_pal
     images:
-      - tiles/dungeon0.png
-
+      - tiles/DL_tree1.png
+      - tiles/DL_tree2.png
+      - tiles/DL_tree3.png
+      - tiles/DL_tree4.png
+      - tiles/DL_wall1.png
+      - tiles/DL_wall2.png
+      - tiles/DL_wall3.png
+      - tiles/DL_wall4.png
+      - tiles/DL_wallA.png
+      - tiles/DL_wallB.png
+      - tiles/DL_wallC.png
+  - name: ftiles_pal
+    images:
+      - tiles/DL_floor1.png
+      - tiles/DL_floor2.png
+      - tiles/DL_floor3.png
+      - tiles/DL_floor4.png
+      - tiles/floorstuff.png
+      - tiles/consumables.png
+      - tiles/food_kitems.png
+  - name: charequtiles_pal
+    images:
+      - tiles/characters.png
+      - tiles/equips.png
         
 converts:
   - name: ui
-    palette: base_palette
+    palette: base_pal
     palette-offset: 0
     images:
-      - uix/xpfood.png
-      - uix/hpmp.png
-      - uix/digitbar_top.png
-      - uix/digitbar_btm.png
-      - uix/areagfx.png
-      - uix/floorgfx.png
-  - name: dungeon0
-    palette: dungeon0_pal
+      - ui/xpfood.png
+      - ui/hpmp.png
+      - ui/digitbar_top.png
+      - ui/digitbar_btm.png
+      - ui/areagfx.png
+      - ui/floorgfx.png
+    tilesets:
+      tile-width: 16
+      tile-height: 16
+      images:
+      - tiles/player0.png
+      
+  - name: dtiles
+    palette: dtiles_pal
     palette-offset: 16
     tilesets:
       tile-width: 16
       tile-height: 16
       images:
-        - tiles/dungeon0.png
-        
-        
+        - tiles/DL_tree1.png
+        - tiles/DL_tree2.png
+        - tiles/DL_tree3.png
+        - tiles/DL_tree4.png
+        - tiles/DL_wall1.png
+        - tiles/DL_wall2.png
+        - tiles/DL_wall3.png
+        - tiles/DL_wall4.png
+        - tiles/DL_wallA.png
+        - tiles/DL_wallB.png
+        - tiles/DL_wallC.png
+  - name: ftiles
+    palette: ftiles_pal
+    palette-offset: 64
+    tilesets:
+      tile-width: 16
+      tile-height: 16
+      images:
+        - tiles/DL_floor1.png
+        - tiles/DL_floor2.png
+        - tiles/DL_floor3.png
+        - tiles/DL_floor4.png
+        - tiles/floorstuff.png
+        - tiles/consumables.png
+        - tiles/food_kitems.png
+  - name: charequtiles
+    palette: charequtiles_pal
+    palette-offset: 128
+    tilesets: 
+      tile-width: 16
+      tile-height: 16
+      images:
+        - tiles/characters.png
+        - tiles/equips.png
         
         

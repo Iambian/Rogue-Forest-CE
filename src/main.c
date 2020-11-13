@@ -10,30 +10,17 @@
 #include <fileioc.h>
 
 #include "defs.h"
-#include "gfx/output/gfx_ui.h"
-#include "gfx/output/gfx_dun0.h"
+#include "main.h"
+#include "dgen.h"
+#include "sobjs.h"
+#include "gfx/output/gfx_base.h"
+#include "gfx/output/gfx_dtiles.h"
+#include "gfx/output/gfx_ftiles.h"
+#include "gfx/output/gfx_charequtiles.h"
 
 
 /* Display data updating and management */
-struct pstats_st {
-	uint8_t update,updateprev;
-	uint8_t x,y;
-	uint8_t subx,suby;
-	uint8_t forestarea;
-	uint8_t dungeonid;
-	uint8_t dungeonfloor;
-	uint8_t level;
-	int		xp,maxxp;
-	int		food,maxfood;
-	uint8_t hp,maxhp;
-	uint8_t mp,maxmp;
-	uint8_t	attack,defense,agility,magic,rawrs;
-	
-	
-	
-};
 struct pstats_st pstats;
-
 int maxlevel_table[] = {
 	20,		40,		60,		80,		120,
 	200,	300,	450,	800,	1200,
@@ -41,12 +28,7 @@ int maxlevel_table[] = {
 	13000,	18000,	25000,	34000,	60000
 };
 
-
-
 /* ROOMS ROOMS ROOMS ROOMS ROOMS ROOMS */
-typedef struct room_st {
-	uint8_t type,x,y,w,h;
-} room_t;
 uint8_t numrooms;				//Number of rooms
 room_t roomlist[NUMROOMS_MAX];	//Rooms of type 0 are not used/read
 
@@ -56,19 +38,20 @@ gfx_sprite_t* curmap;			//Init to 128,128
 gfx_tilemap_t tilemap;
 uint8_t tile2color[513];		//For tilemap to minimap conversion. Maybe-collisiondetect?
 
+uint8_t	numsobjs;
+sobj_t	sobjs[];
+uint8_t	nummobjs;
+mobj_t	mobjs[];
+
+item_t inventory[60];	//Fix to a value later when we figure out status screen
+item_t equipped;
+item_t secondary;
+
 
 
 /* Function prototypes goes here */
-
-
-void gen_TestDungeon(uint8_t roomdensity);
-void gen_ResetAll(void);
-void gen_SetMinimapColors(uint8_t *tile2col, uint8_t sizeof_list);
-void gen_BufToTilemap(void);
 void disp_ShowSidebar(void);
 uint8_t util_GetNumWidth(int num);	//Returns text width of digits were it displayed
-uint8_t	*asm_SetTile2ColorStart(void);
-void asm_LoadMinimap(uint8_t xpos, uint8_t ypos);
 void game_Initialize(void);
 
 
@@ -85,6 +68,7 @@ int main(void) {
 	gfx_SwapDraw();
 	xpos = ypos = 8;
 	pstats.update = UPD_SIDEBAR;
+	dbg_sprintf(dbgout,"Curmap location %X\n",&curmap);
 	
 	while (1) {
 		kb_Scan();
@@ -128,151 +112,6 @@ int main(void) {
 	gfx_End();
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//index corresponds to tile ID, value is color to display.
-//Set main with gen_SetMinimapColors
-uint8_t dun0_tile2color[] = {COLOR_WHITE,COLOR_BLACK};
-/* Randomly places rooms around the map, then makes paths between them */
-void gen_TestDungeon(uint8_t roomdensity)  {
-	uint8_t i,j,k,iscollide,x,y,w,h,x2,y2,t,mx,my,nx,ny;
-	room_t *room;
-	
-	if (roomdensity<3) roomdensity = 3;
-	//Ensure at least two rooms are generated.
-	do {
-		gen_ResetAll();
-		
-		//Attempt to generate number of rooms equal to roomdensity
-		for (i = 0; i < roomdensity; ++i) {
-			w = randInt(5,20);
-			h = randInt(5,20);
-			x = randInt(0,127-w);
-			y = randInt(0,127-h);
-			iscollide = 0;
-			for (j = 0; j < NUMROOMS_MAX; ++j) {
-				room = &roomlist[j];
-				if (room->type) {
-					iscollide |=
-					gfx_CheckRectangleHotspot(x,y,w,h,room->x,room->y,room->w,room->h);
-				} else break;
-			}
-			if (!iscollide) {
-				//dbg_sprintf(dbgout,"Roomgen %i - (%i,%i,%i,%i)\n",numrooms,x,y,w,h);
-				room = &roomlist[numrooms];
-				room->type = 1;
-				room->x = x;
-				room->y = y;
-				room->w = w;
-				room->h = h;
-				++numrooms;
-				if ((numrooms+1) == NUMROOMS_MAX) break;	//stop generating.
-			}
-		}
-	} while (numrooms < 3);
-	gfx_SetColor(1);	//walls
-	//Write rooms to the grid
-	for (i = 0; i < numrooms ; ++i) {
-		//dbg_sprintf(dbgout,"Room grid ID %i\n",i);
-		room = &roomlist[i];
-		if (!room->type) continue; //guard
-		gfx_FillRectangle_NoClip(room->x,room->y,room->w,room->h);
-		//Provide one or two paths out of the current room
-		for (j = randInt(1,2); j; --j) {
-			//dbg_sprintf(dbgout,"Path return ID %i\n",j);
-			//Ensure the random room to path to is not itself.
-			while ((k=randInt(0,(numrooms-1))) == i);
-			//Select random point inside of room
-			room = &roomlist[i];
-			//dbg_sprintf(dbgout,"Path item A-(%i) dims: (%i,%i,%i,%i)\n",i,room->x,room->y,room->w,room->h);
-			x = room->x + randInt(0,(room->w - 2));
-			y = room->y + randInt(0,(room->h - 2));
-			//Select random point inside other room
-			room = &roomlist[k];
-			//dbg_sprintf(dbgout,"Path item B-(%i) dims: (%i,%i,%i,%i)\n",i,room->x,room->y,room->w,room->h);
-			x2 = room->x + randInt(0,(room->w - 2));
-			y2 = room->y + randInt(0,(room->h - 2));
-			//dbg_sprintf(dbgout,"Path return coords: (%i,%i) - (%i,%i)\n",x2,y2,x,y);
-			
-			if (randInt(0,1)) {
-				//Vertical-first
-				gfx_Line_NoClip(x, y, x,y2);
-				gfx_Line_NoClip(x2,y2,x,y2);
-			} else {
-				//Horizontal-first
-				gfx_Line_NoClip(x, y, x2,y );
-				gfx_Line_NoClip(x2,y2,x2,y );
-			}
-		}
-	}
-	
-	/* Use gen_BufToTilemap to do the buffering things */
-	gen_BufToTilemap();
-	gen_SetMinimapColors(dun0_tile2color,2);
-	/* Place dungeon interpolation logic below */
-	
-	
-	
-	
-	
-}
-
-
-
-void gen_ResetAll(void) {
-	uint8_t i;
-	
-	for (i = 0; i < NUMROOMS_MAX; ++i) {
-		roomlist[i].type = 0;
-	}
-	for (i=0; i<255; ++i) {
-		tile2color[i] = 0;
-	}
-	numrooms = 0;
-	gfx_FillScreen(0x00);
-	++totalgens;
-}
-
-
-/* 	I'm not entirely sure what kind of transform I'd be doing here, but the generator
-	really ought to correspond to the tilemap itself. So far, we've gotten lucky due
-	to alignment and probable clamping on the side of the tilemapper */
-void gen_BufToTilemap(void) {
-	uint8_t x,y,*ptr;
-	gfx_GetSprite(curmap,0,0);
-	ptr = (uint8_t*)curmap;
-	ptr += 2;
-	for(y=0; y<128; ++y) {
-		for(x=0; x<128; ++x) {
-			//*ptr = *ptr + 16;
-		}
-	}
-}
-void gen_SetMinimapColors(uint8_t *tile2col, uint8_t sizeof_list) {
-	uint8_t i,*ptr1,*ptr2;
-	
-	ptr1 = asm_SetTile2ColorStart();
-	ptr2 = tile2col;
-	
-	for (i = 0; i<sizeof_list; ++i,++ptr1,++ptr2) {
-		*ptr1 = *ptr2;
-	}
-}
-
-
-
 
 
 
@@ -392,12 +231,28 @@ void disp_ShowSidebar(void) {
 
 
 
+uint8_t util_GetNumWidth(int num) {
+	if (num<10) 	return (8*1);
+	if (num<100) 	return (8*2);
+	if (num<1000) 	return (8*3);
+	if (num<10000) 	return (8*4);
+	if (num<100000) return (8*5);
+	return 48;	//We will not be displaying wider numbers.
+}
 
 
-
-
-
-
+void sys_filenotfound(uint8_t filenum) {
+	gfx_FillScreen(0);
+	gfx_SetTextFGColor(0xE0);
+	gfx_PrintStringXY("Fatal error: File RoFoDAT",8,8);
+	gfx_PrintUInt(filenum,1);
+	gfx_PrintString(" not found.");
+	gfx_PrintStringXY("Press any key to exit.",8,20);
+	gfx_SwapDraw();
+	while (!kb_AnyKey());
+	gfx_End();
+	exit(0);
+}
 
 void game_Initialize(void) {
 	gfx_Begin();
@@ -413,13 +268,16 @@ void game_Initialize(void) {
 	gfx_SwapDraw();
 	gfx_FillScreen(0);
 	//Game data init
+	
+	if (!RoFoDAT0_init()) sys_filenotfound(0);
+	if (!RoFoDAT1_init()) sys_filenotfound(1);
+	if (!RoFoDAT2_init()) sys_filenotfound(2);
+	if (!RoFoDAT3_init()) sys_filenotfound(3);
+	
+	gfx_SetPalette(base_pal,sizeof_base_pal,ui_palette_offset);
 	curmap = gfx_MallocSprite(128,128);
-	//minimap = gfx_MallocSprite(64,64);
-	gfx_SetPalette(base_palette,sizeof_base_palette,ui_palette_offset);
-	gfx_SetPalette(dungeon0_pal,sizeof_dungeon0_pal,dungeon0_palette_offset);
 	
 	tilemap.map = (((uint8_t*)curmap)+2);
-	tilemap.tiles = dungeon0_tiles;
     tilemap.type_width  = gfx_tile_16_pixel;
     tilemap.type_height = gfx_tile_16_pixel;
 	tilemap.tile_height = 16;
@@ -432,11 +290,3 @@ void game_Initialize(void) {
     tilemap.x_loc       = 4;
 }
 
-uint8_t util_GetNumWidth(int num) {
-	if (num<10) 	return (8*1);
-	if (num<100) 	return (8*2);
-	if (num<1000) 	return (8*3);
-	if (num<10000) 	return (8*4);
-	if (num<100000) return (8*5);
-	return 48;	//We will not be displaying wider numbers.
-}
