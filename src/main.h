@@ -17,8 +17,17 @@ struct pstats_st {
 	int		food,maxfood;
 	uint8_t hp,maxhp;
 	uint8_t mp,maxmp;
-	uint8_t	attack,defense,agility,magic,rawrs;
-};
+	uint8_t status;
+	uint8_t strength,agility,intelligence,rawrs;
+	uint8_t attack,defense,evasion,sneakiness,magic;
+	uint8_t mresist,fireresist,elecresist,poisonresist;
+	uint8_t statpoints;
+	uint8_t talentpoints;
+	uint8_t facing;
+	uint8_t walkcycle;	//Used to animate the player sprite when walking
+	uint8_t timer;		//like a walk cycle, except updates regardless of mov't
+	
+}; //pstats is the variable being used with this struct
 
 typedef struct room_st {
 	uint8_t type,x,y,w,h;
@@ -44,16 +53,25 @@ typedef struct item_st {
 	uint8_t data;	//e.g. stacking (cons), enchantment (gear), dungeon ID (keys)
 } item_t;
 
-
-
-
+typedef struct floordat_st {
+	uint32_t 	seed;
+	uint8_t		sobj_count;
+	uint8_t		mobj_count;
+	
+} floordat_t;
 
 /* --------------------------- variable declarations -----------------------*/
+extern sobj_t empty_sobj;
+extern mobj_t empty_mobj;
+extern item_t empty_item;
+extern gfx_sprite_t *empty_tile;
+extern gfx_sprite_t **main_tilemap;
 
 extern struct pstats_st pstats;
 extern int maxlevel_table[];
 extern uint8_t numrooms;
 extern room_t roomlist[NUMROOMS_MAX];
+extern floordat_t floordat;
 
 extern int totalgens;
 extern gfx_sprite_t* curmap;
@@ -66,7 +84,8 @@ extern uint8_t	nummobjs;
 extern mobj_t	mobjs[];
 
 extern item_t inventory[];
-extern item_t equipped;
+extern item_t equipment[];
+extern item_t quickbar[];
 extern item_t secondary;
 
 

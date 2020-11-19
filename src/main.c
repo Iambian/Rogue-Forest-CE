@@ -1,7 +1,7 @@
 /* Testing for level generation */
 /* First compile size: 1153 bytes */
 
-
+#include <string.h>
 
 #include <graphx.h>
 #include <debug.h>
@@ -13,6 +13,7 @@
 #include "main.h"
 #include "dgen.h"
 #include "sobjs.h"
+#include "items.h"
 #include "gfx/output/gfx_base.h"
 #include "gfx/output/gfx_dtiles.h"
 #include "gfx/output/gfx_ftiles.h"
@@ -31,6 +32,7 @@ int maxlevel_table[] = {
 /* ROOMS ROOMS ROOMS ROOMS ROOMS ROOMS */
 uint8_t numrooms;				//Number of rooms
 room_t roomlist[NUMROOMS_MAX];	//Rooms of type 0 are not used/read
+floordat_t floordat;
 
 /* Dungeon graphics management */
 int totalgens;					//Number of times a room generator was run
@@ -39,18 +41,26 @@ gfx_tilemap_t tilemap;
 uint8_t tile2color[513];		//For tilemap to minimap conversion. Maybe-collisiondetect?
 
 uint8_t	numsobjs;
-sobj_t	sobjs[];
+sobj_t	sobjs[255];
 uint8_t	nummobjs;
-mobj_t	mobjs[];
+mobj_t	mobjs[255];
 
-item_t inventory[60];	//Fix to a value later when we figure out status screen
-item_t equipped;
+sobj_t empty_sobj;
+mobj_t empty_mobj;
+item_t empty_item;
+gfx_sprite_t *empty_tile;
+gfx_sprite_t **main_tilemap;
+
+item_t inventory[64];
+item_t equipment[8];		//rng1,rng2, hat, armor, glov, prim, boots, secnd
+item_t quickbar[10];
 item_t secondary;
 
 
 
 /* Function prototypes goes here */
 void disp_ShowSidebar(void);
+void disp_ShowInventory(uint8_t state);
 uint8_t util_GetNumWidth(int num);	//Returns text width of digits were it displayed
 void game_Initialize(void);
 
@@ -59,52 +69,100 @@ int main(void) {
 	int sec,subsec;
 	uint8_t k,kc;
 	uint8_t xpos,ypos,x,y;
-	uint8_t *ptr;
+	uint8_t *ptr,t,moving,facing,cycle;
+	int px,py,cx,cy;
 	
 	game_Initialize();
 	
 	/* Testing conditions */
-	gen_TestDungeon(20);
+	gen_TestDungeon(20); //Sets positioning
 	gfx_SwapDraw();
-	xpos = ypos = 8;
 	pstats.update = UPD_SIDEBAR;
-	dbg_sprintf(dbgout,"Curmap location %X\n",&curmap);
+	dbg_sprintf(dbgerr,"Curmap location %X\n",&curmap);
+	facing = 0;
 	
 	while (1) {
 		kb_Scan();
 		k = kb_Data[7];
 		kc = kb_Data[1];
 		if (kc & kb_Mode) break;
-		if (!k) continue;
-		if (( k & kb_Left) && (xpos>0)) 	--xpos;
-		if (( k & kb_Right) && (xpos<127)) ++xpos;
-		if (( k & kb_Up)   && (ypos>0)) 	--ypos;
-		if (( k & kb_Down) && (ypos<127))  ++ypos;
+		
+		if (kc & kb_Yequ)			disp_ShowInventory(0);
+		else if (kc & kb_Window)	disp_ShowInventory(1);
+		else if (kc & kb_Zoom)		disp_ShowInventory(3);
+		else if (kc & kb_Trace)		disp_ShowInventory(4);
+		else if (kc & kb_Graph)		disp_ShowInventory(5);
+
+		//if (!k) continue;
+		
+		xpos = pstats.x;
+		ypos = pstats.y;
+		
+		cycle = 0;
+		if (( k & kb_Left) && (xpos>0)) 	{ --xpos; facing=8;  }
+		if (( k & kb_Right) && (xpos<127))	{ ++xpos; facing=4;  }
+		if (( k & kb_Up)   && (ypos>0)) 	{ --ypos; facing=12; }
+		if (( k & kb_Down) && (ypos<127))  	{ ++ypos; facing=0;  }
+		
+		/*	Check for collision. If a collision has occurred, check what you ran
+			into to perform an action (or no action if one cannot occur. e.g. wall)
+		*/
+		t = curmap->data[ypos*128+xpos];
+		moving = 1;		//Set to zero if movement is canceled.
+		//Check if wall collide. If so, cancel movement.
+		if (t<0x40) {
+			//moving = 0;
+		}
 		
 		
-		/*	You'd insert a loop here to see change in xpos/ypos in pstats.x
-			and pstats.y, scrolling pstats.subx and pstats.suby in the process.
-			Updating the sidebar need not occur until after the animation
-			sequence has concluded. */
-		//
+		
+
+		
+		if (moving) {
+			/*	You'd insert a loop here to see change in xpos/ypos in pstats.x
+				and pstats.y, scrolling pstats.subx and pstats.suby in the process.
+				Updating the sidebar need not occur until after the animation
+				sequence has concluded. */
+			//
+		} else {
+			//Do not try to optimize away. xpos/ypos still needed below.
+			xpos = pstats.x;
+			ypos = pstats.y;
+		}
+		pstats.x = xpos;
+		pstats.y = ypos;
+		
 		x = xpos-7;
 		y = ypos-7;
 		if (x>230) x = 0;
 		else if (x>113) x = 113;
 		if (y>230) y = 0;
 		else if (y>113) y = 113;
-		gfx_Tilemap_NoClip(&tilemap,x*16,y*16);
+		cx = x*16;
+		cy = y*16;
+		
+		gfx_Tilemap_NoClip(&tilemap,cx,cy);
+		
+		px = xpos*16+4;
+		py = ypos*16+4;
+		gfx_SetClipRegion(4,4,4+224,4+224);
+		gfx_TransparentSprite(player0_tiles[facing+(cycle&3)],px-cx,py-cy);
+		gfx_SetClipRegion(0,0,320,240);
+		
+		
 		
 		disp_ShowSidebar();
 		asm_LoadMinimap(xpos,ypos);
 		/* Testing */
 		gfx_SetColor(COLOR_BLACK);
 		gfx_SetTextFGColor(COLOR_WHITE);
-		gfx_FillRectangle(4,LCD_HEIGHT-10,88,8);
+		gfx_FillRectangle(4,LCD_HEIGHT-10,200,8);
 		gfx_SetTextXY(4,LCD_HEIGHT-10);
 		gfx_PrintUInt(xpos,3);
 		gfx_PrintString(", ");
 		gfx_PrintUInt(ypos,3);
+		gfx_PrintString(" -- dbg --");
+		gfx_PrintUInt(numsobjs,1);
 		
 		gfx_SwapDraw();
 	}
@@ -215,9 +273,117 @@ void disp_ShowSidebar(void) {
 	return;
 }
 
+void disp_printstatplus(char *s, uint8_t base, uint8_t plus) {
+	gfx_PrintString(s);
+	if (base) {
+		gfx_PrintUInt(base,2);
+		if (plus) {
+			gfx_PrintChar('+');
+			gfx_PrintUInt(plus,2);
+		}
+	}
+	gfx_SetTextXY(6,gfx_GetTextY() + 12);
+}
 
-
-
+void disp_ShowInventory(uint8_t state) {
+	uint8_t icursor,scursor,update;
+	kb_key_t sk,k,pk;
+	uint8_t temp,gx,gy,i,t;
+	int x,y;
+	void *ptr;
+	
+	gfx_BlitScreen(gfx_buffer);
+	icursor = scursor = pk = k = 0;
+	update = 1;
+	while (1) {
+		kb_Scan();
+		k = kb_Data[1];
+		switch (k) {
+			case kb_Yequ:	state = 0; update = 1; break;
+			case kb_Window:	state = 1; update = 1; break;
+			case kb_Zoom:	state = 2; update = 1; break;
+			case kb_Trace:	state = 3; update = 1; break;
+			case kb_Graph:	state = 4; update = 1; break;
+			default: break;
+		}
+		k = (kb_Data[1] & 0xE0) | kb_Data[7];	//Combine dpad and del/mode/2nd
+		sk = (k ^ pk) & k;	//read changes to key state, but only on press.
+		pk = k;				//After that, save actual key state for next run
+		if (k&kb_Mode) break;
+		if (k|update) {
+			/* Backer */
+			gfx_SetColor(COLOR_GUNMETALGRAY);
+			gfx_FillRectangle_NoClip(4,4,224,224);
+			gfx_SetTextFGColor(COLOR_WHITE);
+			gfx_SetTextXY(6,10);
+			if (!state) {
+				disp_printstatplus("STR: ",pstats.strength,0);
+				disp_printstatplus("AGI: ",pstats.agility,0);
+				disp_printstatplus("INT: ",pstats.intelligence,0);
+				disp_printstatplus("---------",0,0);
+				disp_printstatplus("ATK: ",pstats.attack,0);
+				disp_printstatplus("EVA: ",pstats.evasion,0);
+				disp_printstatplus("SNK: ",pstats.sneakiness,0);
+				disp_printstatplus("MAG: ",pstats.magic,0);
+				disp_printstatplus("---------",0,0);
+				disp_printstatplus("M res: ",pstats.mresist,0);
+				disp_printstatplus("F res: ",pstats.fireresist,0);
+				disp_printstatplus("L res: ",pstats.elecresist,0);
+				disp_printstatplus("P res: ",pstats.poisonresist,0);
+				disp_printstatplus("---------",0,0);
+				disp_printstatplus("S Pts: ",pstats.statpoints,0);
+				disp_printstatplus("T Pts: ",pstats.talentpoints,0);
+				gfx_SetColor(COLOR_DARKGRAY);
+				gfx_FillRectangle(123+4,6,4,77);	//vertical divider
+				gfx_FillRectangle(127+4,47,95,4);	//quick/inv divider
+				gfx_FillRectangle(82+4,79,45,4);	//equip/packs divider
+				
+				//Equipment
+				for (i=0; i<8; ++i) {
+					x = 4+80+4 + 18*(i&1);
+					y = (i>>1) * 18 + 4+4;
+					t = equipment[i].type;
+					if (!t)	ptr = equipicons_tiles[i+1];	//skip over blank default
+					else	ptr = items_GetItemSprite(t);
+					gfx_Sprite_NoClip(ptr,x,y);
+				}
+				//Quickbar
+				for (i=0; i<10; ++i) {
+					x = 4+80+2+36+14 + 18*(i%5);
+					y = 4+2+ 18*(i/5);
+					t = quickbar[i].type;
+					if (!t)	ptr = equipicons_tiles[i+10];	//skip over top row
+					else	ptr = items_GetItemSprite(t);
+					gfx_Sprite_NoClip(ptr,x,y);
+				}
+				//Inventory
+				for (i=0; i<35; ++i) {
+					x = 4+80+2+36+14 + 18*(i%5);
+					y = 4+2+36+14+ 18*(i/5);
+					t = inventory[i].type;
+					if (!t)	ptr = equipicons_tiles[0];
+					else	ptr = items_GetItemSprite(t);
+					if (i==34) ptr = equipicons_tiles[9]; //trashcan
+					gfx_Sprite_NoClip(ptr,x,y);
+				}
+				//Should put inventory box selector here. Or something else.
+				
+				
+				
+			} else if (state == 1) {
+				disp_printstatplus("Pure stats page.",0,0);
+				disp_printstatplus("Nothing here yet.",0,0);
+			} else {
+				disp_printstatplus("idk what will go here.",0,0);
+				disp_printstatplus("No plans yet.",0,0);
+			}
+			gfx_SwapDraw();
+			update = 0;
+		}
+	}
+	while (kb_AnyKey());
+	return;
+}
 
 
 
@@ -255,6 +421,9 @@ void sys_filenotfound(uint8_t filenum) {
 }
 
 void game_Initialize(void) {
+	uint8_t *ptr;
+	int i;
+	
 	gfx_Begin();
 	srand(rtc_Time());
 	
@@ -276,6 +445,14 @@ void game_Initialize(void) {
 	
 	gfx_SetPalette(base_pal,sizeof_base_pal,ui_palette_offset);
 	curmap = gfx_MallocSprite(128,128);
+	empty_tile = gfx_MallocSprite(16,16);
+	for (i=0,ptr=empty_tile->data; i<256; ++i,++ptr) *ptr = COLOR_RED;
+	
+	main_tilemap = malloc(sizeof(gfx_sprite_t*)*256);
+	for (i=0; i<256; ++i) main_tilemap[i] = empty_tile;
+	
+	gfx_SetPalette(charequtiles_pal,sizeof_charequtiles_pal,charequtiles_palette_offset);
+	gfx_SetPaletteEntry(charequtiles_palette_offset,gfx_RGBTo1555(128,160,160)); //gunmetal gray
 	
 	tilemap.map = (((uint8_t*)curmap)+2);
     tilemap.type_width  = gfx_tile_16_pixel;
@@ -288,5 +465,6 @@ void game_Initialize(void) {
     tilemap.width       = 128;
     tilemap.y_loc       = 4;
     tilemap.x_loc       = 4;
+	tilemap.tiles		= main_tilemap;
 }
 

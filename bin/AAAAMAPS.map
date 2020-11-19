@@ -2,102 +2,131 @@ Segment  Base   Top    High   Length
 -------- ------ ------ ------ -------
 icon     D1A882 D1A9A2           120h
 launcher D1A9A2 D1A9FA            58h
-libs     D1A9FA D1AA95            9Bh
-startup  D1AA95 D1AAD4            3Fh
-cleanup  D1AAD4 D1AAE8            14h
-exit     D1AAE8 D1AAEE             6h
-code     D1AAEE D1C3C7          18D9h
-data     D1C3C7 D1CAAA           6E3h
-strsect  D1CAAA D1CB30            86h
-text     D1CB30 D1CB30             0h
-bss      D031F6 D03517 D13FD6    321h
+libs     D1A9FA D1AAA5            ABh
+startup  D1AAA5 D1AAE4            3Fh
+cleanup  D1AAE4 D1AAF8            14h
+exit     D1AAF8 D1AAFE             6h
+code     D1AAFE D1D43D          293Fh
+data     D1D43D D1DB8C           74Fh
+strsect  D1DB8C D1DCC9           13Dh
+text     D1DCC9 D1DCC9             0h
+bss      D031F6 D0415D D13FD6    F67h
 header   D1A87F D1A882             3h
 
 Label                          Value
 ----------------------------   ------
-_os_DisableHomeTextBuffer    = D1AAEE
-_os_EnableHomeTextBuffer     = D1AB00
-_srandom                     = D1AB12
-__setstate                   = D1AB19
-_random                      = D1AB29
-__state                      = D1C3C7
-__frameset                   = D1AB80
-_sprintf                     = 0000BC
+_os_DisableHomeTextBuffer    = D1AAFE
+_os_EnableHomeTextBuffer     = D1AB10
+_srandom                     = D1AB22
+__setstate                   = D1AB29
+_random                      = D1AB39
+__state                      = D1D43D
+__frameset0                  = D1AB90
+__case8                      = 000124
+__frameset                   = D1AB9B
 __imul_b                     = 000158
 __imul_b                     = 000150
-__s_sbrk                     = D1AB8E
+__ishrs_b                    = 00017C
+__ishrs_b                    = 000180
+__irems                      = 00016C
+__inot                       = 000164
+__s_sbrk                     = D1ABA9
+_memcpy                      = 0000A4
 __ior                        = 000168
 __idivs                      = 00013C
 __iremu                      = 000170
 __icmpzero                   = 000138
-_srand                       = D1ABAE
+_srand                       = D1ABC9
 __setflag                    = 000218
-_malloc                      = D1ABE7
+_malloc                      = D1AC02
 __alloc_base                 = D031F6
 __findlibload                = D1A9A2
 __program_icon               = D1A887
 __program_description        = D1A989
-__ccleanup                   = D1AAD4
+__ccleanup                   = D1AAE4
 _errno                       = D008DC
 _init                        = D1A882
-_exit                        = D1AAEA
-__exit                       = D1AAC3
-__exitsp                     = D1AAC3
-__errsp                      = D1AAC3
-_gen_SetMinimapColors        = D1B179
-_gen_BufToTilemap            = D1B123
-_gen_ResetAll                = D1B0A9
-_gen_TestDungeon             = D1AC8F
-_trees_minimap               = D1C3FC
-_RoFoDAT0_init               = D1B1C0
-_RoFoDAT0_appvar             = D1C40E
-_RoFoDAT1_init               = D1B242
-_DL_wallC_tiles_data         = D1C663
-_DL_wallB_tiles_data         = D1C62D
-_DL_wallA_tiles_data         = D1C5F7
-_DL_wall4_tiles_data         = D1C5C1
-_DL_wall3_tiles_data         = D1C58B
-_DL_wall2_tiles_data         = D1C555
-_DL_wall1_tiles_data         = D1C51F
-_DL_tree4_tiles_data         = D1C4E9
-_DL_tree3_tiles_data         = D1C4B3
-_DL_tree2_tiles_data         = D1C47D
-_DL_tree1_tiles_data         = D1C447
-_RoFoDAT1_appvar             = D1C423
-_RoFoDAT2_init               = D1B5DE
-_food_kitems_tiles_data      = D1C885
-_consumables_tiles_data      = D1C83D
-_floorstuff_tiles_data       = D1C7AD
-_DL_floor4_tiles_data        = D1C76E
-_DL_floor3_tiles_data        = D1C72F
-_DL_floor2_tiles_data        = D1C6F0
-_DL_floor1_tiles_data        = D1C6B1
-_RoFoDAT2_appvar             = D1C699
-_RoFoDAT3_init               = D1B85A
-_equips_tiles_data           = D1C9AE
-_characters_tiles_data       = D1C8BE
-_RoFoDAT3_appvar             = D1C8B5
-_game_Initialize             = D1C089
-_sys_filenotfound            = D1C009
-_util_GetNumWidth            = D1BF8F
-_disp_ShowSidebar            = D1BB0B
-_main                        = D1B96E
-_secondary                   = D03515
-_equipped                    = D03513
-_inventory                   = D0349B
-_nummobjs                    = D0349A
-_numsobjs                    = D03499
-_tile2color                  = D03298
-_tilemap                     = D03286
-_curmap                      = D03283
-_totalgens                   = D03280
-_roomlist                    = D0321C
-_numrooms                    = D0321B
-_maxlevel_table              = D1CA6E
+_exit                        = D1AAFA
+__exit                       = D1AAD3
+__exitsp                     = D1AAD3
+__errsp                      = D1AAD3
+_gen_GetSavedFloorData       = D1B4CB
+_gen_SetMinimapColorsDefault = D1B47F
+_gen_SetMinimapColors        = D1B43E
+_gen_BufToTilemap            = D1B3EC
+_gen_ResetAll                = D1B374
+_gen_TestDungeon             = D1ACAA
+_RoFoDAT0_init               = D1B4CF
+_equipicons_tiles_data       = D1D4BD
+_player0_tiles_data          = D1D48D
+_RoFoDAT0_appvar             = D1D472
+_RoFoDAT1_init               = D1B5DE
+_DL_wallC_tiles_data         = D1D739
+_DL_wallB_tiles_data         = D1D703
+_DL_wallA_tiles_data         = D1D6CD
+_DL_wall4_tiles_data         = D1D697
+_DL_wall3_tiles_data         = D1D661
+_DL_wall2_tiles_data         = D1D62B
+_DL_wall1_tiles_data         = D1D5F5
+_DL_tree4_tiles_data         = D1D5BF
+_DL_tree3_tiles_data         = D1D589
+_DL_tree2_tiles_data         = D1D553
+_DL_tree1_tiles_data         = D1D51D
+_RoFoDAT1_appvar             = D1D4F9
+_RoFoDAT2_init               = D1B975
+_food_kitems_tiles_data      = D1D910
+_floorstuff_tiles_data       = D1D880
+_DL_floor4_tiles_data        = D1D841
+_DL_floor3_tiles_data        = D1D802
+_DL_floor2_tiles_data        = D1D7C3
+_DL_floor1_tiles_data        = D1D784
+_RoFoDAT2_appvar             = D1D76F
+_RoFoDAT3_init               = D1BBA4
+_consumables_tiles_data      = D1DAFC
+_equips_tiles_data           = D1DA3C
+_characters_tiles_data       = D1D94C
+_RoFoDAT3_appvar             = D1D940
+_items_GetItemSprite         = D1BCFB
+_game_Initialize             = D1CB05
+_sys_filenotfound            = D1CA8A
+_util_GetNumWidth            = D1CA15
+_disp_ShowInventory          = D1C4F5
+_disp_printstatplus          = D1C491
+_disp_ShowSidebar            = D1C012
+_main                        = D1BD64
+_secondary                   = D0415B
+_quickbar                    = D04147
+_equipment                   = D04137
+_inventory                   = D040B7
+_main_tilemap                = D040B4
+_empty_tile                  = D040B1
+_empty_item                  = D040AF
+_empty_mobj                  = D040A7
+_empty_sobj                  = D040A3
+_mobjs                       = D038AB
+_nummobjs                    = D038AA
+_sobjs                       = D034AE
+_numsobjs                    = D034AD
+_tile2color                  = D032AC
+_tilemap                     = D0329A
+_curmap                      = D03297
+_totalgens                   = D03294
+_floordat                    = D0328E
+_roomlist                    = D0322A
+_numrooms                    = D03229
+_maxlevel_table              = D1DB44
 _pstats                      = D031FC
-_asm_LoadMinimap             = D1C1BA
-_asm_SetTile2ColorStart      = D1C1AF
-_asm_InterpolateMap          = D1C255
+_sobj_IsDoorable             = D1D036
+_sobj_cardinals              = D1DB80
+_sobj_WriteToMap             = D1CE76
+_sobj_getwarpbydest          = D1CE1A
+_sobj_getentrybypos          = D1CDBF
+_sobj_rementry               = D1CD5F
+_sobj_addentry               = D1CD25
+_sobj_clear                  = D1CCE9
+_asm_LoadMinimap             = D1D131
+_asm_SetTile2ColorStart      = D1D126
+_asm_InterpolateMap          = D1D1CC
 _ti_CloseAll                 = D1AA0E
 _ti_Open                     = D1AA12
 _ti_GetDataPtr               = D1AA16
@@ -108,22 +137,26 @@ _gfx_SetPalette              = D1AA2F
 _gfx_FillScreen              = D1AA33
 _gfx_SetDraw                 = D1AA37
 _gfx_SwapDraw                = D1AA3B
-_gfx_PrintChar               = D1AA3F
-_gfx_PrintUInt               = D1AA43
-_gfx_PrintString             = D1AA47
-_gfx_PrintStringXY           = D1AA4B
-_gfx_SetTextXY               = D1AA4F
-_gfx_SetTextBGColor          = D1AA53
-_gfx_SetTextFGColor          = D1AA57
-_gfx_SetTextTransparentColor = D1AA5B
-_gfx_FillRectangle           = D1AA5F
-_gfx_Line_NoClip             = D1AA63
-_gfx_Rectangle_NoClip        = D1AA67
-_gfx_FillRectangle_NoClip    = D1AA6B
-_gfx_Tilemap_NoClip          = D1AA6F
-_gfx_AllocSprite             = D1AA73
-_gfx_Sprite_NoClip           = D1AA77
-_gfx_GetSprite               = D1AA7B
-_gfx_SetTransparentColor     = D1AA7F
-_kb_Scan                     = D1AA8D
-_kb_AnyKey                   = D1AA91
+_gfx_Blit                    = D1AA3F
+_gfx_PrintChar               = D1AA43
+_gfx_PrintUInt               = D1AA47
+_gfx_PrintString             = D1AA4B
+_gfx_PrintStringXY           = D1AA4F
+_gfx_SetTextXY               = D1AA53
+_gfx_SetTextBGColor          = D1AA57
+_gfx_SetTextFGColor          = D1AA5B
+_gfx_SetTextTransparentColor = D1AA5F
+_gfx_GetTextY                = D1AA63
+_gfx_FillRectangle           = D1AA67
+_gfx_Line_NoClip             = D1AA6B
+_gfx_Rectangle_NoClip        = D1AA6F
+_gfx_FillRectangle_NoClip    = D1AA73
+_gfx_SetClipRegion           = D1AA77
+_gfx_Tilemap_NoClip          = D1AA7B
+_gfx_AllocSprite             = D1AA7F
+_gfx_TransparentSprite       = D1AA83
+_gfx_Sprite_NoClip           = D1AA87
+_gfx_GetSprite               = D1AA8B
+_gfx_SetTransparentColor     = D1AA8F
+_kb_Scan                     = D1AA9D
+_kb_AnyKey                   = D1AAA1

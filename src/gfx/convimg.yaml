@@ -59,6 +59,8 @@ palettes:
       - color: {index: 14, r: 96, g: 96, b: 96}      #entry 14 - dark gray
       - color: {index: 15, r: 128, g: 0, b: 128}     #entry 15 - purple
   - name: dtiles_pal
+    fixed-entries:
+      - color: {index: 0, r: 255, g: 0, b: 220}
     images:
       - tiles/DL_tree1.png
       - tiles/DL_tree2.png
@@ -72,18 +74,22 @@ palettes:
       - tiles/DL_wallB.png
       - tiles/DL_wallC.png
   - name: ftiles_pal
+    fixed-entries:
+      - color: {index: 0, r: 255, g: 0, b: 220}
     images:
       - tiles/DL_floor1.png
       - tiles/DL_floor2.png
       - tiles/DL_floor3.png
       - tiles/DL_floor4.png
       - tiles/floorstuff.png
-      - tiles/consumables.png
       - tiles/food_kitems.png
   - name: charequtiles_pal
+    fixed-entries:
+      - color: {index: 0, r: 255, g: 0, b: 220}
     images:
       - tiles/characters.png
       - tiles/equips.png
+      - tiles/consumables.png
         
 converts:
   - name: ui
@@ -100,11 +106,13 @@ converts:
       tile-width: 16
       tile-height: 16
       images:
-      - tiles/player0.png
+        - tiles/player0.png
+        - tiles/equipicons.png
       
   - name: dtiles
     palette: dtiles_pal
     palette-offset: 16
+    transparent-color-index: 0
     tilesets:
       tile-width: 16
       tile-height: 16
@@ -132,7 +140,6 @@ converts:
         - tiles/DL_floor3.png
         - tiles/DL_floor4.png
         - tiles/floorstuff.png
-        - tiles/consumables.png
         - tiles/food_kitems.png
   - name: charequtiles
     palette: charequtiles_pal
@@ -143,5 +150,6 @@ converts:
       images:
         - tiles/characters.png
         - tiles/equips.png
-        
+        - tiles/consumables.png
+          
         

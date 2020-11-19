@@ -2,6 +2,9 @@
 #define __DEFS__INCGUARD__
 
 
+#define gfx_SetPaletteEntry(offset,color1555) ((uint16_t*)0xE30200)[offset] = color1555;
+
+
 #define SBAR_LEFT	(4+16*14+4)
 #define SBAR_TOP	2
 #define XPFOOD_X	(SBAR_LEFT+2)
@@ -32,8 +35,42 @@
 #define UPD_BACKERS		(1<<7)
 #define UPD_SIDEBAR		0xFF
 
-
-
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#define FLOORBASE 0x80
+//Offset+1 = trap activated
+#define TILE_TRAP1	(FLOORBASE+0)
+#define TILE_TRAP2	(FLOORBASE+2)
+#define TILE_TRAP3	(FLOORBASE+4)
+#define TILE_TRAP4	(FLOORBASE+6)
+#define TILE_TRAP5	(FLOORBASE+8)
+#define TILE_TRAP6	(FLOORBASE+10)
+#define TILE_TRAP7	(FLOORBASE+12)
+//Offset+1 = door embedded in a vertical wall (side-view)
+#define TILE_DOOROPEN	(FLOORBASE+14)
+#define TILE_DOORCLOSED	(FLOORBASE+16)
+#define TILE_DOORLOCKED	(FLOORBASE+18)
+#define TILE_DOORSEALED	(FLOORBASE+20)
+//Offset+0 = portal disabled, Offsets +1 and +2 = portal active animation frames
+#define TILE_PORTAL1	(FLOORBASE+22)
+#define TILE_PORTAL2	(FLOORBASE+25)
+#define TILE_STAIRSUP	(FLOORBASE+28)
+#define TILE_STAIRSDOWN	(FLOORBASE+29)
+#define TILE_STAIRSBIGUP	(FLOORBASE+30)
+#define TILE_STAIRSBIGDOWN	(FLOORBASE+31)
+//Offset+0 = chest closed, +1 = opened
+#define TILE_TREASURECHEST	(FLOORBASE+32)
+#define TILE_TREASURELOCKED	(FLOORBASE+34)
+#define TILE_TREASURESEALED	(FLOORBASE+36)
+#define TILE_CRYSTALTREASURE	(FLOORBASE+38)
+//Misc
+#define TILE_MONEYBIG		(FLOORBASE+40)
+#define TILE_MONEYMED		(FLOORBASE+41)
+#define TILE_MONEYSMOL		(FLOORBASE+42)
+#define TILE_KEY			(FLOORBASE+43)
+#define TILE_MASTERKEY		(FLOORBASE+44)
+#define TILE_LAMP			(FLOORBASE+45)
+#define TILE_KEYCARD		(FLOORBASE+46)
+#define TILE_CANDLES		(FLOORBASE+47)
 
 
 
