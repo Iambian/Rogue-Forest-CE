@@ -177,8 +177,10 @@ int main(void) {
 void disp_ShowSidebar(void) {
 	uint8_t u;
 	uint8_t y;
-	uint8_t w,sw;
+	uint8_t w,sw,t,i;
+	int x;
 	int temp;
+	void *ptr;
 	
 	u = pstats.update | pstats.updateprev;
 	
@@ -249,19 +251,30 @@ void disp_ShowSidebar(void) {
 		gfx_PrintUInt(pstats.maxmp,1);
 	}
 	if (u|UPD_CURGEAR) {
-		//Top icon (weapon) at CURGEAR_X,CURGEAR_Y
+		t = equipment[5].type;
+		if (!t)	ptr = equipicons_tiles[6];
+		else	ptr = items_GetItemSprite(t);
+		gfx_Sprite_NoClip(ptr,CURGEAR_X,CURGEAR_Y);
 		gfx_SetTextXY(CURGEAR_X+18,CURGEAR_Y+1);
-		//Top gear text line 1 here.
-		gfx_SetTextXY(CURGEAR_X+18,CURGEAR_Y+1+8);
-		//Top gear text line 2 here.
+		items_PrintItemname_Left(t);
 		
-		//Bottom icon (auxillary) at CURGEAR_X,CURGEAR_Y+18
+		t = equipment[7].type;
+		if (!t)	ptr = equipicons_tiles[8];
+		else	ptr = items_GetItemSprite(t);
+		gfx_Sprite_NoClip(ptr,CURGEAR_X,CURGEAR_Y+18);
 		gfx_SetTextXY(CURGEAR_X+18,CURGEAR_Y+19);
-		//Bottom gear text line 1 here.
-		gfx_SetTextXY(CURGEAR_X+18,CURGEAR_Y+19+8);
-		//Bottom gear text line 2 here.
+		items_PrintItemname_Left(t);
 	}
 	if (u|UPD_QUICKSET) {
+		//Quickbar
+		for (i=0; i<10; ++i) {
+			x = QUICKSET_X + 18*(i%5);
+			y = QUICKSET_Y + 8 + 18*(i/5);
+			t = quickbar[i].type;
+			if (!t)	ptr = equipicons_tiles[i+10];	//skip over top row
+			else	ptr = items_GetItemSprite(t);
+			gfx_Sprite_NoClip(ptr,x,y);
+		}		
 		//Row 1 starting at QUICKSET_X,QUICKSET_Y+8
 		//Row 2 starting at QUICKSET_X,QUICKSET_X+8+16+2
 		//Equipment X-spacing at 18px intervals
@@ -312,24 +325,33 @@ void disp_ShowInventory(uint8_t state) {
 		if (k&kb_Mode) break;
 		if (k|update) {
 			/* Backer */
+			if ((k&kb_Down) && (icursor < 30)) icursor += 5;
+			if ((k&kb_Up)   && (icursor > 4 )) icursor -= 5;
+			if ((k&kb_Right)&& (icursor < 34)) icursor += 1;
+			if ((k&kb_Left) && (icursor > 0))  icursor -= 1;
+			
+			
+			
 			gfx_SetColor(COLOR_GUNMETALGRAY);
 			gfx_FillRectangle_NoClip(4,4,224,224);
 			gfx_SetTextFGColor(COLOR_WHITE);
 			gfx_SetTextXY(6,10);
 			if (!state) {
 				disp_printstatplus("STR: ",pstats.strength,0);
-				disp_printstatplus("AGI: ",pstats.agility,0);
-				disp_printstatplus("INT: ",pstats.intelligence,0);
+				disp_printstatplus("AGI: ",pstats.speeds,0);
+				disp_printstatplus("INT: ",pstats.smarts,0);
 				disp_printstatplus("---------",0,0);
 				disp_printstatplus("ATK: ",pstats.attack,0);
+				disp_printstatplus("DEF: ",pstats.defense,0);
 				disp_printstatplus("EVA: ",pstats.evasion,0);
-				disp_printstatplus("SNK: ",pstats.sneakiness,0);
+				disp_printstatplus("SNK: ",pstats.sneaks,0);
 				disp_printstatplus("MAG: ",pstats.magic,0);
 				disp_printstatplus("---------",0,0);
-				disp_printstatplus("M res: ",pstats.mresist,0);
-				disp_printstatplus("F res: ",pstats.fireresist,0);
-				disp_printstatplus("L res: ",pstats.elecresist,0);
-				disp_printstatplus("P res: ",pstats.poisonresist,0);
+				disp_printstatplus("M res: ",pstats.mres,0);
+				disp_printstatplus("F res: ",pstats.fres,0);
+				disp_printstatplus("L res: ",pstats.eres,0);
+				disp_printstatplus("P res: ",pstats.pres,0);
+				disp_printstatplus("Rflct: ",pstats.reflect,0);
 				disp_printstatplus("---------",0,0);
 				disp_printstatplus("S Pts: ",pstats.statpoints,0);
 				disp_printstatplus("T Pts: ",pstats.talentpoints,0);
@@ -367,7 +389,20 @@ void disp_ShowInventory(uint8_t state) {
 					gfx_Sprite_NoClip(ptr,x,y);
 				}
 				//Should put inventory box selector here. Or something else.
+				x = 4+80+2+36+14 + 18*(icursor%5);
+				y = 4+2+36+14+ 18*(icursor/5);
+				gfx_HorizLine_NoClip(x,y-1,16);		//top line
+				gfx_HorizLine_NoClip(x,y+16,16);	//bottom line
+				gfx_VertLine_NoClip(x-1,y,16);		//left line
+				gfx_VertLine_NoClip(x+16,y,16);		//Right line
 				
+				gfx_SetColor(COLOR_BLACK);
+				gfx_FillRectangle_NoClip(0,228,320,12);
+				gfx_SetTextFGColor(COLOR_WHITE);
+				gfx_SetTextXY(4,230);
+				items_PrintItemname_Bottom(inventory[icursor].type);
+				gfx_PrintString(" :: ");
+				gfx_PrintString(items_GetItemDesc(inventory[icursor].type));
 				
 				
 			} else if (state == 1) {
@@ -421,7 +456,7 @@ void sys_filenotfound(uint8_t filenum) {
 }
 
 void game_Initialize(void) {
-	uint8_t *ptr;
+	uint8_t *ptr,j;
 	int i;
 	
 	gfx_Begin();
@@ -466,5 +501,34 @@ void game_Initialize(void) {
     tilemap.y_loc       = 4;
     tilemap.x_loc       = 4;
 	tilemap.tiles		= main_tilemap;
+	
+	for (j=0,i=1;i<64;i+=4,++j) {
+		inventory[j].type = i;
+		inventory[j].data = 0;
+	}
+	for (i=ITEM_CONSUMABLE; i < CONS_UNUSEDPOTION1 ; ++i,++j) {
+		inventory[j].type = i;
+		inventory[j].data = 1;
+	}
+	
+	equipment[0].type = EQU_SNEAKRING;
+	equipment[0].data = 0;
+	equipment[1].type = EQU_RAWRSRING;
+	equipment[1].data = 0;
+	equipment[2].type = EQU_HAT;
+	equipment[2].data = 0;
+	equipment[3].type = EQU_LEATHERARMOR;
+	equipment[3].data = 0;
+	equipment[4].type = EQU_BADTOUCHER;
+	equipment[4].data = 0;
+	equipment[5].type = EQU_SHADOWSWORD;
+	equipment[5].data = 0;
+	equipment[6].type = EQU_NINJABOOTS;
+	equipment[6].data = 0;
+	equipment[7].type = EQU_REFLECTSHIELD;
+	equipment[7].data = 0;
+	
+	
+	
 }
 
