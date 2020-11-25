@@ -14,6 +14,7 @@
 #include "dgen.h"
 #include "sobjs.h"
 #include "items.h"
+#include "mobjs.h"
 #include "gfx/output/gfx_base.h"
 #include "gfx/output/gfx_dtiles.h"
 #include "gfx/output/gfx_ftiles.h"
@@ -69,7 +70,7 @@ int main(void) {
 	int sec,subsec;
 	uint8_t k,kc;
 	uint8_t xpos,ypos,x,y;
-	uint8_t *ptr,t,moving,facing,cycle;
+	uint8_t *ptr,t,moving,facing,cycle,ecycle;
 	int px,py,cx,cy;
 	
 	game_Initialize();
@@ -79,13 +80,14 @@ int main(void) {
 	gfx_SwapDraw();
 	pstats.update = UPD_SIDEBAR;
 	dbg_sprintf(dbgerr,"Curmap location %X\n",&curmap);
-	facing = 0;
+	ecycle = facing = 0;
 	
 	while (1) {
 		kb_Scan();
 		k = kb_Data[7];
 		kc = kb_Data[1];
 		if (kc & kb_Mode) break;
+		++ecycle;
 		
 		if (kc & kb_Yequ)			disp_ShowInventory(0);
 		else if (kc & kb_Window)	disp_ShowInventory(1);
@@ -149,7 +151,8 @@ int main(void) {
 		gfx_TransparentSprite(player0_tiles[facing+(cycle&3)],px-cx,py-cy);
 		gfx_SetClipRegion(0,0,320,240);
 		
-		
+		//Testing enemy animation
+		gfx_Sprite_NoClip(*(enemydef[0].sprobj+((ecycle&0x08)>>3)),12,12);
 		
 		disp_ShowSidebar();
 		asm_LoadMinimap(xpos,ypos);
@@ -286,18 +289,21 @@ void disp_ShowSidebar(void) {
 	return;
 }
 
-void disp_printstatplus(char *s, uint8_t base, uint8_t plus) {
+void disp_stats(char *s, uint8_t base, int plus) {
 	gfx_PrintString(s);
-	if (base) {
+	if (base|plus) {
 		gfx_PrintUInt(base,2);
 		if (plus) {
-			gfx_PrintChar('+');
+			if (plus<0) {
+				gfx_PrintChar('-');
+				plus = -plus;
+			} else 	gfx_PrintChar('+');
 			gfx_PrintUInt(plus,2);
 		}
 	}
-	gfx_SetTextXY(6,gfx_GetTextY() + 12);
+	gfx_SetTextXY(6,gfx_GetTextY() + 10);
 }
-
+#define disp_diff(member) playerbase.##member##,(playercalc.##member##-playerbase.##member##)
 void disp_ShowInventory(uint8_t state) {
 	uint8_t icursor,scursor,update;
 	kb_key_t sk,k,pk;
@@ -322,13 +328,13 @@ void disp_ShowInventory(uint8_t state) {
 		k = (kb_Data[1] & 0xE0) | kb_Data[7];	//Combine dpad and del/mode/2nd
 		sk = (k ^ pk) & k;	//read changes to key state, but only on press.
 		pk = k;				//After that, save actual key state for next run
-		if (k&kb_Mode) break;
-		if (k|update) {
+		if (sk&kb_Mode) break;
+		if (sk|update) {
 			/* Backer */
-			if ((k&kb_Down) && (icursor < 30)) icursor += 5;
-			if ((k&kb_Up)   && (icursor > 4 )) icursor -= 5;
-			if ((k&kb_Right)&& (icursor < 34)) icursor += 1;
-			if ((k&kb_Left) && (icursor > 0))  icursor -= 1;
+			if ((sk&kb_Down) && (icursor < 30)) icursor += 5;
+			if ((sk&kb_Up)   && (icursor > 4 )) icursor -= 5;
+			if ((sk&kb_Right)&& (icursor < 34)) icursor += 1;
+			if ((sk&kb_Left) && (icursor > 0))  icursor -= 1;
 			
 			
 			
@@ -336,25 +342,31 @@ void disp_ShowInventory(uint8_t state) {
 			gfx_FillRectangle_NoClip(4,4,224,224);
 			gfx_SetTextFGColor(COLOR_WHITE);
 			gfx_SetTextXY(6,10);
+			mobj_recalcplayer();	//MOVE THIS TO START, CLOSE, AND ON GEARCHANGE
 			if (!state) {
-				disp_printstatplus("STR: ",pstats.strength,0);
-				disp_printstatplus("AGI: ",pstats.speeds,0);
-				disp_printstatplus("INT: ",pstats.smarts,0);
-				disp_printstatplus("---------",0,0);
-				disp_printstatplus("ATK: ",pstats.attack,0);
-				disp_printstatplus("DEF: ",pstats.defense,0);
-				disp_printstatplus("EVA: ",pstats.evasion,0);
-				disp_printstatplus("SNK: ",pstats.sneaks,0);
-				disp_printstatplus("MAG: ",pstats.magic,0);
-				disp_printstatplus("---------",0,0);
-				disp_printstatplus("M res: ",pstats.mres,0);
-				disp_printstatplus("F res: ",pstats.fres,0);
-				disp_printstatplus("L res: ",pstats.eres,0);
-				disp_printstatplus("P res: ",pstats.pres,0);
-				disp_printstatplus("Rflct: ",pstats.reflect,0);
-				disp_printstatplus("---------",0,0);
-				disp_printstatplus("S Pts: ",pstats.statpoints,0);
-				disp_printstatplus("T Pts: ",pstats.talentpoints,0);
+				disp_stats("STR: ",disp_diff(str));
+				disp_stats("AGI: ",disp_diff(spd));
+				disp_stats("INT: ",disp_diff(smrt));
+				gfx_SetTextXY(6,gfx_GetTextY() + 4);
+				disp_stats("ATK: ",disp_diff(atk));
+				disp_stats("SNK: ",disp_diff(snk));
+				disp_stats("RWR: ",disp_diff(rawrs));
+				disp_stats("DEF: ",disp_diff(def));
+				disp_stats("BLK: ",disp_diff(blk));
+				disp_stats("REF: ",disp_diff(refl));
+				gfx_SetTextXY(6,gfx_GetTextY() + 4);
+				disp_stats("MATK: ",disp_diff(matk));
+				disp_stats("FATK: ",disp_diff(fatk));
+				disp_stats("EATK: ",disp_diff(eatk));
+				disp_stats("PATK: ",disp_diff(patk));
+				gfx_SetTextXY(6,gfx_GetTextY() + 4);
+				disp_stats("MDEF: ",disp_diff(mdef));
+				disp_stats("FDEF: ",disp_diff(fdef));
+				disp_stats("EDEF: ",disp_diff(edef));
+				disp_stats("PDEF: ",disp_diff(pdef));				
+				gfx_SetTextXY(6,gfx_GetTextY() + 4);
+				disp_stats("S Pts: ",pstats.statpoints,0);
+				disp_stats("T Pts: ",pstats.talentpoints,0);
 				gfx_SetColor(COLOR_DARKGRAY);
 				gfx_FillRectangle(123+4,6,4,77);	//vertical divider
 				gfx_FillRectangle(127+4,47,95,4);	//quick/inv divider
@@ -372,7 +384,7 @@ void disp_ShowInventory(uint8_t state) {
 				//Quickbar
 				for (i=0; i<10; ++i) {
 					x = 4+80+2+36+14 + 18*(i%5);
-					y = 4+2+ 18*(i/5);
+					y = 4+4+ 18*(i/5);
 					t = quickbar[i].type;
 					if (!t)	ptr = equipicons_tiles[i+10];	//skip over top row
 					else	ptr = items_GetItemSprite(t);
@@ -406,11 +418,11 @@ void disp_ShowInventory(uint8_t state) {
 				
 				
 			} else if (state == 1) {
-				disp_printstatplus("Pure stats page.",0,0);
-				disp_printstatplus("Nothing here yet.",0,0);
+				disp_stats("Pure stats page.",0,0);
+				disp_stats("Nothing here yet.",0,0);
 			} else {
-				disp_printstatplus("idk what will go here.",0,0);
-				disp_printstatplus("No plans yet.",0,0);
+				disp_stats("idk what will go here.",0,0);
+				disp_stats("No plans yet.",0,0);
 			}
 			gfx_SwapDraw();
 			update = 0;
@@ -427,9 +439,42 @@ void disp_ShowInventory(uint8_t state) {
 
 
 
+char numbuf[9];
 
-
-
+char *util_BufInt(int num) {
+	uint8_t i,j,slen,lim,sign;
+	char *ptr,c;
+	
+	//Record sign of input num
+	if (num<0) {
+		sign = 1;
+		num = -num;
+	} else sign = 0;
+	
+	//Get digits in reverse order, guaranteeing at least '0' being printed.
+	ptr = numbuf;
+	do {
+		*ptr = (num % 10) + '0';
+		num  = num / 10;
+		++ptr;
+	} while (num);
+	//Append sign either '+' or '-'
+	c = (sign) ? '-' : '+';
+	*ptr = c;
+	++ptr;
+	
+	//Cap off the number buffer and then reverse the characters in it
+	*ptr = 0;
+	slen = strlen(numbuf);
+	lim = slen/2+slen%2;
+	dbg_sprintf(dbgout,"rawrfs %i,%i\n",slen,lim);
+	for (i = 0, j = slen-1; i<lim; ++i, --j) {
+		c = numbuf[i];
+		numbuf[i] = numbuf[j];
+		numbuf[j] = c;
+	}
+	return numbuf;
+}
 
 
 uint8_t util_GetNumWidth(int num) {
@@ -502,32 +547,7 @@ void game_Initialize(void) {
     tilemap.x_loc       = 4;
 	tilemap.tiles		= main_tilemap;
 	
-	for (j=0,i=1;i<64;i+=4,++j) {
-		inventory[j].type = i;
-		inventory[j].data = 0;
-	}
-	for (i=ITEM_CONSUMABLE; i < CONS_UNUSEDPOTION1 ; ++i,++j) {
-		inventory[j].type = i;
-		inventory[j].data = 1;
-	}
-	
-	equipment[0].type = EQU_SNEAKRING;
-	equipment[0].data = 0;
-	equipment[1].type = EQU_RAWRSRING;
-	equipment[1].data = 0;
-	equipment[2].type = EQU_HAT;
-	equipment[2].data = 0;
-	equipment[3].type = EQU_LEATHERARMOR;
-	equipment[3].data = 0;
-	equipment[4].type = EQU_BADTOUCHER;
-	equipment[4].data = 0;
-	equipment[5].type = EQU_SHADOWSWORD;
-	equipment[5].data = 0;
-	equipment[6].type = EQU_NINJABOOTS;
-	equipment[6].data = 0;
-	equipment[7].type = EQU_REFLECTSHIELD;
-	equipment[7].data = 0;
-	
+	mobj_newchar();
 	
 	
 }

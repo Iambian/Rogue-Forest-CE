@@ -131,6 +131,9 @@ typedef struct itemdef_st {
 } itemdef_t;
 
 
+extern itemdef_t equipdefs[];
+
+
 
 gfx_sprite_t *items_GetItemSprite(uint8_t id);
 char *items_GetItemName(uint8_t id);

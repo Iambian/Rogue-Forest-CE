@@ -46,7 +46,9 @@ typedef struct mobj_st {
 	uint8_t x;
 	uint8_t y;
 	uint8_t flags;
-	uint8_t data[4];
+	uint8_t hp;
+	uint8_t mp;
+	uint8_t data[2];
 } mobj_t;
 
 //You may want to do bitpacking shenanigans if you want to have more than 255 items.
@@ -93,6 +95,7 @@ extern item_t secondary;
 
 
 /* --------------------- external routines in util.asm ---------------------*/
+char *util_BufInt(int num);
 uint8_t	*asm_SetTile2ColorStart(void);
 void 	asm_LoadMinimap(uint8_t xpos, uint8_t ypos);
 void	asm_InterpolateMap(void);
