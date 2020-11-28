@@ -4,6 +4,16 @@
 #include <stdint.h>
 #include "main.h"
 
+#define EFL_RNG (1<<0)
+#define EFL_HAT (1<<1)
+#define EFL_ARM (1<<2)
+#define EFL_GLO (1<<3)
+#define EFL_WPN (1<<4)
+#define EFL_BTS (1<<5)
+#define EFL_2ND (1<<6)
+#define EFL_MSC (1<<7)
+
+
 // ========================
 #define ITEM_EQUIPPABLE 1
 
@@ -123,6 +133,7 @@
 
 typedef struct itemdef_st {
 	char	*name;
+	uint8_t	type;
 	int 	enchantmult;	//fixed point 16.8 against modifier1
 	int8_t	modifier1;
 	uint8_t	offset1;
@@ -140,7 +151,7 @@ char *items_GetItemName(uint8_t id);
 char *items_GetItemDesc(uint8_t id);
 void items_PrintItemname_Left(uint8_t id);
 void items_PrintItemname_Bottom(uint8_t id);
-
+uint8_t items_GetItemType(uint8_t id);
 
 
 

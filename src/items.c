@@ -37,86 +37,86 @@ char descbuf[80];
 	
 //Type/id is indexed by position in this array
 itemdef_t equipdefs[] = {
-	//  item display name,enchantmlt,val1,   offset1,val2, offset2
-	{"Robe\n"            ,fl2fx(1.0),   4, MD(matk) ,   0,MD(name)},
-	{"Leather\nArmor"    ,fl2fx(1.0),   2, MD(def)  ,   0,MD(name)},
-	{"Metal\nArmor"      ,fl2fx(1.0),   4, MD(def)  ,  -5,MD(snk)},
-	{"Shiny\nArmor"      ,fl2fx(1.0),   4, MD(def)  ,   6,MD(refl)},
+	//  item display name,equtype, enchantmlt,val1,   offset1,val2, offset2
+	{"Robe\n"            ,EFL_ARM, fl2fx(1.0),   4, MD(matk) ,   0,MD(name)},
+	{"Leather\nArmor"    ,EFL_ARM, fl2fx(1.0),   2, MD(def)  ,   0,MD(name)},
+	{"Metal\nArmor"      ,EFL_ARM, fl2fx(1.0),   4, MD(def)  ,  -5,MD(snk)},
+	{"Shiny\nArmor"      ,EFL_ARM, fl2fx(1.0),   4, MD(def)  ,   6,MD(refl)},
 	
-	{"Bigbrain\nPendant" ,fl2fx(1.0),   4, MD(smrt) ,   0,MD(name)},
-	{"Stonks\nPendant"   ,fl2fx(1.0),   4, MD(str)  ,   0,MD(name)},
-	{"Windy\nPendant"    ,fl2fx(1.0),   4, MD(spd)  ,   0,MD(name)},
-	{"Mystic\nPendant"   ,fl2fx(5.0),  20, MD(maxmp),   0,MD(name)},
+	{"Bigbrain\nPendant" ,EFL_ARM, fl2fx(1.0),   4, MD(smrt) ,   0,MD(name)},
+	{"Stonks\nPendant"   ,EFL_ARM, fl2fx(1.0),   4, MD(str)  ,   0,MD(name)},
+	{"Windy\nPendant"    ,EFL_ARM, fl2fx(1.0),   4, MD(spd)  ,   0,MD(name)},
+	{"Mystic\nPendant"   ,EFL_ARM, fl2fx(5.0),  20, MD(maxmp),   0,MD(name)},
 	
-	{"Beefy\nPendant"    ,fl2fx(5.0),  20, MD(maxhp),   0,MD(name)},
-	{"Tanky\nPendant"    ,fl2fx(1.0),   6, MD(def)  ,   0,MD(name)},
-	{"Bouncy\nPendant"   ,fl2fx(1.0),   8, MD(refl) ,   0,MD(name)},
-	{"BOOSH\nPendant"    ,fl2fx(1.0),  10, MD(str)  ,  10,MD(smrt)},
+	{"Beefy\nPendant"    ,EFL_ARM, fl2fx(5.0),  20, MD(maxhp),   0,MD(name)},
+	{"Tanky\nPendant"    ,EFL_ARM, fl2fx(1.0),   6, MD(def)  ,   0,MD(name)},
+	{"Bouncy\nPendant"   ,EFL_ARM, fl2fx(1.0),   8, MD(refl) ,   0,MD(name)},
+	{"BOOSH\nPendant"    ,EFL_ARM, fl2fx(1.0),  10, MD(str)  ,  10,MD(smrt)},
 	
-	{"Shell\nRing"       ,fl2fx(2.0),   6, MD(mdef) ,   0,MD(name)},
-	{"Shock\nRing"       ,fl2fx(1.0),   6, MD(edef) ,   3,MD(eatk)},
-	{"Blaze\nRing"       ,fl2fx(1.0),   6, MD(fdef) ,   3,MD(fatk)},
-	{"Toxic\nRing"       ,fl2fx(1.0),   6, MD(pdef) ,   3,MD(patk)},
+	{"Shell\nRing"       ,EFL_RNG, fl2fx(2.0),   6, MD(mdef) ,   0,MD(name)},
+	{"Shock\nRing"       ,EFL_RNG, fl2fx(1.0),   6, MD(edef) ,   3,MD(eatk)},
+	{"Blaze\nRing"       ,EFL_RNG, fl2fx(1.0),   6, MD(fdef) ,   3,MD(fatk)},
+	{"Toxic\nRing"       ,EFL_RNG, fl2fx(1.0),   6, MD(pdef) ,   3,MD(patk)},
 	
-	{"Muscle\nRing"      ,fl2fx(1.0),   4, MD(str)  ,   0,MD(name)},	//17
-	{"Shield\nRing"      ,fl2fx(1.0),   4, MD(def)  ,   0,MD(name)},
-	{"Manna\nRing"       ,fl2fx(4.0),  15, MD(maxmp),   0,MD(name)},
-	{"Sneaky\nRing"      ,fl2fx(1.0),   4, MD(snk)  ,   4,MD(blk)},
+	{"Muscle\nRing"      ,EFL_RNG, fl2fx(1.0),   4, MD(str)  ,   0,MD(name)},	//17
+	{"Shield\nRing"      ,EFL_RNG, fl2fx(1.0),   4, MD(def)  ,   0,MD(name)},
+	{"Manna\nRing"       ,EFL_RNG, fl2fx(4.0),  15, MD(maxmp),   0,MD(name)},
+	{"Sneaky\nRing"      ,EFL_RNG, fl2fx(1.0),   4, MD(snk)  ,   4,MD(blk)},
 	
-	{"Punchy\nRing"      ,fl2fx(1.0),   8, MD(atk)  ,   0,MD(name)},
-	{"Magic\nRing"       ,fl2fx(1.0),   4, MD(matk) ,   0,MD(name)},
-	{"Healthy\nRing"     ,fl2fx(1.0),  15, MD(maxhp),   0,MD(name)},
-	{"Rawrs\nRing"       ,fl2fx(1.0),   4, MD(rawrs),   0,MD(name)},
+	{"Punchy\nRing"      ,EFL_RNG, fl2fx(1.0),   8, MD(atk)  ,   0,MD(name)},
+	{"Magic\nRing"       ,EFL_RNG, fl2fx(1.0),   4, MD(matk) ,   0,MD(name)},
+	{"Healthy\nRing"     ,EFL_RNG, fl2fx(1.0),  15, MD(maxhp),   0,MD(name)},
+	{"Rawrs\nRing"       ,EFL_RNG, fl2fx(1.0),   4, MD(rawrs),   0,MD(name)},
 	
-	{"Bouncy\nRing"      ,fl2fx(1.0),   4, MD(refl) ,   0,MD(name)},
-	{"Unused\nRing 1"    ,fl2fx(8.0),  20, MD(matk) ,  20,MD(atk)},
-	{"Unused\nRing 2"    ,fl2fx(8.0),  20, MD(def)  ,  20,MD(mdef)},
-	{"Wall\nRing"        ,fl2fx(1.0),   4, MD(def)  ,   4,MD(mdef)},
+	{"Bouncy\nRing"      ,EFL_RNG, fl2fx(1.0),   4, MD(refl) ,   0,MD(name)},
+	{"Unused\nRing 1"    ,EFL_RNG, fl2fx(8.0),  20, MD(matk) ,  20,MD(atk)},
+	{"Unused\nRing 2"    ,EFL_RNG, fl2fx(8.0),  20, MD(def)  ,  20,MD(mdef)},
+	{"Wall\nRing"        ,EFL_RNG, fl2fx(1.0),   4, MD(def)  ,   4,MD(mdef)},
 	
-	{"Shoes\n"           ,fl2fx(1.0),   4, MD(maxmp),   0,MD(name)},
-	{"Leather\nBoots"    ,fl2fx(1.0),   4, MD(def)  ,   0,MD(name)},
-	{"Metal\nBoots"      ,fl2fx(1.0),   6, MD(def)  ,  -5,MD(snk)},
-	{"Ninja\nBoots"      ,fl2fx(1.0),   6, MD(snk)  ,   6,MD(blk)},
+	{"Shoes\n"           ,EFL_BTS, fl2fx(1.0),   4, MD(maxmp),   0,MD(name)},
+	{"Leather\nBoots"    ,EFL_BTS, fl2fx(1.0),   4, MD(def)  ,   0,MD(name)},
+	{"Metal\nBoots"      ,EFL_BTS, fl2fx(1.0),   6, MD(def)  ,  -5,MD(snk)},
+	{"Ninja\nBoots"      ,EFL_BTS, fl2fx(1.0),   6, MD(snk)  ,   6,MD(blk)},
 	
-	{"Leather\nCap"      ,fl2fx(1.0),   4, MD(def)  ,   0,MD(name)},	//33
-	{"Hat\n"             ,fl2fx(1.0),   6, MD(maxmp),   0,MD(name)},
-	{"Helm\n"            ,fl2fx(1.0),   6, MD(def)  ,  -5,MD(snk)},
-	{"Shiny\nHelm"       ,fl2fx(1.0),   4, MD(def)  ,   4,MD(refl)},
+	{"Leather\nCap"      ,EFL_HAT, fl2fx(1.0),   4, MD(def)  ,   0,MD(name)},	//33
+	{"Hat\n"             ,EFL_HAT, fl2fx(1.0),   6, MD(maxmp),   0,MD(name)},
+	{"Helm\n"            ,EFL_HAT, fl2fx(1.0),   6, MD(def)  ,  -5,MD(snk)},
+	{"Shiny\nHelm"       ,EFL_HAT, fl2fx(1.0),   4, MD(def)  ,   4,MD(refl)},
 	
-	{"Thief\nGlove"      ,fl2fx(1.0),   4, MD(maxmp),   4,MD(snk)},
-	{"Leather\nGlove"    ,fl2fx(1.0),   4, MD(def)  ,   0,MD(name)},
-	{"Battle\nMitts"     ,fl2fx(1.0),   4, MD(atk)  ,   2,MD(str)},
-	{"The Bad\nTouch"    ,fl2fx(2.0),  10, MD(atk)  ,  10,MD(matk)},
+	{"Thief\nGlove"      ,EFL_GLO, fl2fx(1.0),   4, MD(maxmp),   4,MD(snk)},
+	{"Leather\nGlove"    ,EFL_GLO, fl2fx(1.0),   4, MD(def)  ,   0,MD(name)},
+	{"Battle\nMitts"     ,EFL_GLO, fl2fx(1.0),   4, MD(atk)  ,   2,MD(str)},
+	{"The Bad\nTouch"    ,EFL_GLO, fl2fx(2.0),  10, MD(atk)  ,  10,MD(matk)},
 	
-	{"Buckler\n"         ,fl2fx(1.0),   2, MD(def)  ,   4,MD(blk)},
-	{"Small\nShield"     ,fl2fx(1.0),   4, MD(def)  ,   4,MD(blk)},
-	{"Tower\nShield"     ,fl2fx(1.0),   6, MD(def)  ,   6,MD(blk)},
-	{"Shiny\nShield"     ,fl2fx(1.0),   8, MD(def)  ,  10,MD(refl)},
+	{"Buckler\n"         ,EFL_2ND, fl2fx(1.0),   2, MD(def)  ,   4,MD(blk)},
+	{"Small\nShield"     ,EFL_2ND, fl2fx(1.0),   4, MD(def)  ,   4,MD(blk)},
+	{"Tower\nShield"     ,EFL_2ND, fl2fx(1.0),   6, MD(def)  ,   6,MD(blk)},
+	{"Shiny\nShield"     ,EFL_2ND, fl2fx(1.0),   8, MD(def)  ,  10,MD(refl)},
 	
-	{"Magic\nMissile"    ,fl2fx(1.0),   5, MD(matk) ,   0,MD(name)},
-	{"Boomy\nSparks"     ,fl2fx(1.0),   5, MD(eatk) ,   0,MD(name)},
-	{"Fireball\n"        ,fl2fx(1.0),   5, MD(fatk) ,   0,MD(name)},
-	{"Poison\nBolt"      ,fl2fx(1.0),   5, MD(patk) ,   0,MD(name)},
+	{"Magic\nMissile"    ,EFL_2ND, fl2fx(1.0),   5, MD(matk) ,   0,MD(name)},
+	{"Boomy\nSparks"     ,EFL_2ND, fl2fx(1.0),   5, MD(eatk) ,   0,MD(name)},
+	{"Fireball\n"        ,EFL_2ND, fl2fx(1.0),   5, MD(fatk) ,   0,MD(name)},
+	{"Poison\nBolt"      ,EFL_2ND, fl2fx(1.0),   5, MD(patk) ,   0,MD(name)},
 	
-	{"Short\nSword"      ,fl2fx(1.0),   4, MD(atk)  ,   0,MD(name)},	//49
-	{"Long\nSword"       ,fl2fx(1.0),   6, MD(atk)  ,   0,MD(name)},
-	{"Buster\nSword"     ,fl2fx(1.0),   8, MD(atk)  ,   0,MD(name)},
-	{"Sneaky\nSword"     ,fl2fx(1.0),   8, MD(atk)  ,   4,MD(snk)},
+	{"Short\nSword"      ,EFL_WPN, fl2fx(1.0),   4, MD(atk)  ,   0,MD(name)},	//49
+	{"Long\nSword"       ,EFL_WPN, fl2fx(1.0),   6, MD(atk)  ,   0,MD(name)},
+	{"Buster\nSword"     ,EFL_WPN, fl2fx(1.0),   8, MD(atk)  ,   0,MD(name)},
+	{"Sneaky\nSword"     ,EFL_WPN, fl2fx(1.0),   8, MD(atk)  ,   4,MD(snk)},
 	
-	{"Gold\nDigger"      ,fl2fx(1.0),   4, MD(atk)  ,   0,MD(name)},
-	{"Poleaxe\n"         ,fl2fx(1.0),   8, MD(atk)  ,   0,MD(name)},
-	{"Halbeard\n"        ,fl2fx(1.0),   8, MD(atk)  ,   0,MD(name)},
-	{"Pointy\nStick"     ,fl2fx(1.0),   6, MD(atk)  ,   0,MD(name)},
+	{"Gold\nDigger"      ,EFL_WPN, fl2fx(1.0),   4, MD(atk)  ,   0,MD(name)},
+	{"Poleaxe\n"         ,EFL_WPN, fl2fx(1.0),   8, MD(atk)  ,   0,MD(name)},
+	{"Halbeard\n"        ,EFL_WPN, fl2fx(1.0),   8, MD(atk)  ,   0,MD(name)},
+	{"Pointy\nStick"     ,EFL_WPN, fl2fx(1.0),   6, MD(atk)  ,   0,MD(name)},
 	
-	{"Saftey\nGoggles"   ,fl2fx(1.0),   0, MD(name) ,   0,MD(name)},
-	{"Prayer\nBeads"     ,fl2fx(4.0),  20, MD(maxmp),   2,MD(matk)},
-	{"Crystal\nBall"     ,fl2fx(1.0),  10, MD(matk) ,  10,MD(mdef)},
-	{"Escape\nRope"      ,fl2fx(1.0),  10, MD(snk)  ,   0,MD(name)},
+	{"Saftey\nGoggles"   ,EFL_MSC, fl2fx(1.0),   0, MD(name) ,   0,MD(name)},
+	{"Prayer\nBeads"     ,EFL_MSC, fl2fx(4.0),  20, MD(maxmp),   2,MD(matk)},
+	{"Crystal\nBall"     ,EFL_MSC, fl2fx(1.0),  10, MD(matk) ,  10,MD(mdef)},
+	{"Escape\nRope"      ,EFL_MSC, fl2fx(1.0),  10, MD(snk)  ,   0,MD(name)},
 
-	{"Short\nBow"        ,fl2fx(1.0),   4, MD(atk)  ,   0,MD(name)},
-	{"Long\nBow"         ,fl2fx(1.0),   6, MD(atk)  ,   0,MD(name)},
-	{"Sling\n"           ,fl2fx(1.0),   4, MD(atk)  ,   0,MD(name)},
-	{"Hand\nCannon"      ,fl2fx(1.0),  10, MD(atk)  ,  -5,MD(snk)},
+	{"Short\nBow"        ,EFL_WPN, fl2fx(1.0),   4, MD(atk)  ,   0,MD(name)},
+	{"Long\nBow"         ,EFL_WPN, fl2fx(1.0),   6, MD(atk)  ,   0,MD(name)},
+	{"Sling\n"           ,EFL_WPN, fl2fx(1.0),   4, MD(atk)  ,   0,MD(name)},
+	{"Hand\nCannon"      ,EFL_WPN, fl2fx(1.0),  10, MD(atk)  ,  -5,MD(snk)},
 	
 };
 
@@ -176,9 +176,20 @@ char *items_GetItemName(uint8_t id) {
 	if (id < ITEM_CONSUMABLE) return item_illegal;
 	tmpid = id - ITEM_CONSUMABLE;
 	if (tmpid < consumables_tiles_num) return consumenames[tmpid][0];
-	return item_illegal; 
+	return item_illegal;
 }
 
+uint8_t items_GetItemType(uint8_t id) {
+	uint8_t tmpid;
+	
+	if (!id) return 0;
+	tmpid = id - ITEM_EQUIPPABLE;
+	if (tmpid < (sizeof(equipdefs)/sizeof(itemdef_t))) return equipdefs[tmpid].type;
+	if (id < ITEM_CONSUMABLE) return 0;
+	tmpid = id - ITEM_CONSUMABLE;
+	if (tmpid < consumables_tiles_num) return 0xFF;
+	return 0;
+}
 
 
 char *items_PrintItemStatName(uint8_t offset) {

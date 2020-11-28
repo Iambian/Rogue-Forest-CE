@@ -289,6 +289,54 @@ void disp_ShowSidebar(void) {
 	return;
 }
 
+//Used only in disp_ShowInventory. Not prototyped. It probably ought to be...
+item_t *disp_GetCursorAddress(uint8_t cur) {
+	if (cur&0x80)	return &equipment[cur&0x7F];
+	else			return &inventory[cur];
+}
+//Used only in disp_ShowInventory. Not prototyped.
+void disp_SwapInvSlots(uint8_t cur, uint8_t prv) {
+	item_t t;
+	
+	t = *disp_GetCursorAddress(cur);
+	*disp_GetCursorAddress(cur) = *disp_GetCursorAddress(prv);
+	*disp_GetCursorAddress(prv) = t;
+	
+}
+//Used only in disp_ShowInventory. Not prototyped.
+uint8_t dispisslotgoodtable[] = {EFL_RNG,EFL_RNG,EFL_HAT,EFL_ARM,EFL_GLO,EFL_WPN,EFL_BTS,EFL_2ND};
+uint8_t disp_IsSlotGood(uint8_t cursor) {
+	uint8_t t,i;
+	if (cursor&0x80) {
+		cursor &= 0x7F;
+		if (!(t = equipment[cursor].type)) return 1;	//Always allow emptiness.
+		t = items_GetItemType(t);
+		if (t == 0xFF) return 0;	//consumables not allowed in equipment slots
+		if (dispisslotgoodtable[cursor] & t) return 1;
+		return 0;
+	} else return 1;	//Items in inventory slots are always valid
+}
+
+
+//Used only in disp_ShowInventory. Not prototyped.
+void disp_InvCursor(uint8_t cursor) {
+	uint8_t t;
+	int x,y;
+	
+	t = cursor & 0x7F;
+	if (cursor&0x80) {
+		x = 4+80+2+2+ 18*(t&1);
+		y = 4+2+2+    18*(t/2);
+	} else {
+		x = 4+80+2+36+14 + 18*(t%5);
+		y = 4+2+36+14+ 18*(t/5);
+	}
+	gfx_HorizLine_NoClip(x,y-1,16);		//top line
+	gfx_HorizLine_NoClip(x,y+16,16);	//bottom line
+	gfx_VertLine_NoClip(x-1,y,16);		//left line
+	gfx_VertLine_NoClip(x+16,y,16);		//Right line
+}
+//Used only in disp_ShowInventory. Not prototyped.
 void disp_stats(char *s, uint8_t base, int plus) {
 	gfx_PrintString(s);
 	if (base|plus) {
@@ -305,14 +353,15 @@ void disp_stats(char *s, uint8_t base, int plus) {
 }
 #define disp_diff(member) playerbase.##member##,(playercalc.##member##-playerbase.##member##)
 void disp_ShowInventory(uint8_t state) {
-	uint8_t icursor,scursor,update;
+	uint8_t cursor,prevcursor,update,cursormode;
 	kb_key_t sk,k,pk;
 	uint8_t temp,gx,gy,i,t;
 	int x,y;
 	void *ptr;
 	
+	mobj_recalcplayer();	//MOVE THIS TO START, CLOSE, AND ON GEARCHANGE
 	gfx_BlitScreen(gfx_buffer);
-	icursor = scursor = pk = k = 0;
+	cursor = prevcursor = pk = k = cursormode = 0;
 	update = 1;
 	while (1) {
 		kb_Scan();
@@ -328,21 +377,85 @@ void disp_ShowInventory(uint8_t state) {
 		k = (kb_Data[1] & 0xE0) | kb_Data[7];	//Combine dpad and del/mode/2nd
 		sk = (k ^ pk) & k;	//read changes to key state, but only on press.
 		pk = k;				//After that, save actual key state for next run
-		if (sk&kb_Mode) break;
+		
+		
+		/* RUN TEST FOR NUMKEYS TO ASSIGN/UNASSIGN INV SLOTS TO/FROM QUICKBAR */
+		
+		
+		if (sk&kb_Mode) {
+			if (cursormode) {
+				cursor = prevcursor;
+				prevcursor = cursormode = 0;
+			} else break;
+		}
+		if (sk&kb_Del) {
+			if (!state) {
+				//Inventory management
+				if (cursor&0x80) {
+					//If equipment, try to move gear to inventory
+					for (i=0; i<34; ++i) if (!inventory[i].type) break;
+					if (i<34) {
+						t = cursor & 0x7F;
+						//An empty slot was found. Shove gear into it.
+						inventory[i] = equipment[t];
+						equipment[t].type = 0;
+						equipment[t].data = 0;
+					}
+				}
+			}
+		}
+		
+		if (sk&kb_2nd) {
+			if (!state) {
+				//inventory mode. select/swap items in inventory
+				if (!cursormode) {
+					prevcursor = cursor;
+					cursormode = 1;
+				} else {
+					//Inventory mode: Complete the transaction (if possible)
+					disp_SwapInvSlots(cursor,prevcursor);
+					if (disp_IsSlotGood(cursor) & disp_IsSlotGood(prevcursor)) {
+						prevcursor = cursormode = 0;
+						mobj_recalcplayer();	//MOVE THIS TO START, CLOSE, AND ON GEARCHANGE
+						inventory[34].type = 0;
+						inventory[34].data = 0; //Items moved to trashcan are deleted.
+						pstats.update |= UPD_CURGEAR|UPD_QUICKSET;
+						disp_ShowSidebar();
+
+					} else disp_SwapInvSlots(cursor,prevcursor); //undo if failed
+				}
+			} else;
+		}
 		if (sk|update) {
+			t = cursor & 0x7F;
+			if (cursor&0x80) {
+				//Cursor in equipment
+				if ((sk&kb_Down) && (t<6)) cursor += 2;
+				if ((sk&kb_Up)   && (t>1)) cursor -= 2;
+				if ((sk&kb_Left) && (t&1)) --cursor;
+				if (sk&kb_Right) {
+					//If maybe leaving equipment
+					if (t&1)		cursor = 0;	//leaving: set to first inv slot
+					else			++cursor;	//staying
+				}
+			} else {
+				//cursor in inventory
+				t = t%5;
+				if ((sk&kb_Down) && (cursor < 30))	cursor += 5;
+				if ((sk&kb_Up)   && (cursor > 4 ))	cursor -= 5;
+				if ((sk&kb_Right) && (t<4))			++cursor;
+				if (sk&kb_Left) {
+					//If maybe leaving inventory
+					if (t)	--cursor;
+					else	cursor = 0x80+7;
+				}
+			}
+			
 			/* Backer */
-			if ((sk&kb_Down) && (icursor < 30)) icursor += 5;
-			if ((sk&kb_Up)   && (icursor > 4 )) icursor -= 5;
-			if ((sk&kb_Right)&& (icursor < 34)) icursor += 1;
-			if ((sk&kb_Left) && (icursor > 0))  icursor -= 1;
-			
-			
-			
 			gfx_SetColor(COLOR_GUNMETALGRAY);
 			gfx_FillRectangle_NoClip(4,4,224,224);
 			gfx_SetTextFGColor(COLOR_WHITE);
 			gfx_SetTextXY(6,10);
-			mobj_recalcplayer();	//MOVE THIS TO START, CLOSE, AND ON GEARCHANGE
 			if (!state) {
 				disp_stats("STR: ",disp_diff(str));
 				disp_stats("AGI: ",disp_diff(spd));
@@ -401,20 +514,23 @@ void disp_ShowInventory(uint8_t state) {
 					gfx_Sprite_NoClip(ptr,x,y);
 				}
 				//Should put inventory box selector here. Or something else.
-				x = 4+80+2+36+14 + 18*(icursor%5);
-				y = 4+2+36+14+ 18*(icursor/5);
-				gfx_HorizLine_NoClip(x,y-1,16);		//top line
-				gfx_HorizLine_NoClip(x,y+16,16);	//bottom line
-				gfx_VertLine_NoClip(x-1,y,16);		//left line
-				gfx_VertLine_NoClip(x+16,y,16);		//Right line
+				gfx_SetColor(COLOR_PURPLE);
+				if (cursormode) {
+					disp_InvCursor(prevcursor);
+					gfx_SetColor(COLOR_ORANGE);
+				}
+				disp_InvCursor(cursor);
 				
 				gfx_SetColor(COLOR_BLACK);
 				gfx_FillRectangle_NoClip(0,228,320,12);
 				gfx_SetTextFGColor(COLOR_WHITE);
 				gfx_SetTextXY(4,230);
-				items_PrintItemname_Bottom(inventory[icursor].type);
+				
+				if (cursor&0x80)	t = equipment[cursor&0x7F].type;
+				else				t = inventory[cursor].type;
+				items_PrintItemname_Bottom(t);
 				gfx_PrintString(" :: ");
-				gfx_PrintString(items_GetItemDesc(inventory[icursor].type));
+				gfx_PrintString(items_GetItemDesc(t));
 				
 				
 			} else if (state == 1) {
@@ -429,6 +545,7 @@ void disp_ShowInventory(uint8_t state) {
 		}
 	}
 	while (kb_AnyKey());
+	mobj_recalcplayer();	//MOVE THIS TO START, CLOSE, AND ON GEARCHANGE
 	return;
 }
 
