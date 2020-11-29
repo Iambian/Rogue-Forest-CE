@@ -72,8 +72,16 @@
 #define TILE_KEYCARD		(FLOORBASE+46)
 #define TILE_CANDLES		(FLOORBASE+47)
 
-
-
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+//map exit macros
+#define FEX_WEST      (1<<0)
+#define FEX_EAST      (1<<1)
+#define FEX_SOUTH     (1<<2)
+#define FEX_NORTH     (1<<3)
+#define FEX_EXIT      (1<<4)
+#define FEX_DUNGEON   (1<<5)
+#define FEX_FLOORUP   (1<<6)
+#define FEX_FLOORDOWN (1<<7)
 
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

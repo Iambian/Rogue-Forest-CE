@@ -49,6 +49,31 @@ void mobj_newchar(void) {
 	
 	//Reset player stats
 	playerbase = playerdef;
+	
+	//Generate overworld dungeon and set player stats accordingly.
+	pstats.level = 0;
+	pstats.xp = 0;
+	pstats.food = 20;
+	pstats.maxfood = 20;
+	pstats.dungeonid = 0;
+	pstats.dungeonfloor = 0;
+	pstats.talentpoints = 0;
+	pstats.statpoints = 0;
+	pstats.forestarea = 0;
+	pstats.facing = 0;
+	pstats.walkcycle = 0;
+	pstats.timer = 0;
+	//
+	// implement generation of forest. probably offload it to somewhere in dgen
+	//
+	
+	/* DEBUG DEBUG DEBUG MANUAL SETTING OF OVERWORLD */
+	pstats.forestarea = forestmap_test_start;
+	memcpy(forestmap,forestmap_test,sizeof(forestmap));
+	memcpy(forestdungeon,forestdungeon_test,sizeof(forestmap));
+	
+	gen_WarpTo(pstats.forestarea);
+	
 	//Reset inventories
 	for (i=0;i<35;++i) {
 		inventory[i].type = 0;

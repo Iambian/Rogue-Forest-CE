@@ -2,8 +2,8 @@
 #define __DGEN__INCGUARD__
 
 
-void gen_TestDungeon(uint8_t roomdensity);
-
+void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid);
+void gen_WarpTo(uint8_t warpdest);
 
 
 

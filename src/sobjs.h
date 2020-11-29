@@ -46,6 +46,8 @@
 #define SOBJ_FOOD		SOBJ_ITEMBASE+4
 #define SOBJ_MOARFOOD	SOBJ_ITEMBASE+5
 
+extern sobj_t scratchsobj;
+
 
 void sobj_clear(void);
 void sobj_addentry(sobj_t* sobj);

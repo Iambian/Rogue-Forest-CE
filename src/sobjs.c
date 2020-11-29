@@ -17,6 +17,13 @@
 #include "gfx/output/gfx_charequtiles.h"
 
 
+sobj_t scratchsobj;
+
+
+
+
+
+
 void sobj_clear(void) {
 	uint8_t i;
 	numsobjs = 0;

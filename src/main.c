@@ -56,8 +56,59 @@ item_t inventory[64];
 item_t equipment[8];		//rng1,rng2, hat, armor, glov, prim, boots, secnd
 item_t quickbar[10];
 item_t secondary;
+uint8_t forestmap[25];		//Exitmap for foresting. Trailing entry indicates starting tile
+uint8_t forestdungeon[6];	//Locations in forest of dungeons
 
+/* TEST MAP S=START, C=CHERRY
+/-+-+-+-+-\
+|S    |   |
+| +-+ + + +
+| |   | | |
+| +-+-+ + +
+| | |C  | |
+| +-+-+-+ +
+|   | |   |
+|-+ + + +-+
+|         |
+\-+-+-+-+-/
+*/
 
+uint8_t forestmap_test_start = 0x01;
+uint8_t forestmap_test[] = {
+	FEX_EAST|FEX_SOUTH|FEX_EXIT,
+	FEX_EAST|FEX_WEST,
+	FEX_WEST|FEX_SOUTH,
+	FEX_SOUTH|FEX_EAST,
+	FEX_WEST|FEX_SOUTH,
+	
+	FEX_NORTH|FEX_SOUTH,
+	FEX_EAST,
+	FEX_WEST|FEX_NORTH,
+	FEX_NORTH|FEX_SOUTH,
+	FEX_NORTH|FEX_SOUTH,
+	
+	FEX_NORTH|FEX_SOUTH,
+	FEX_SOUTH,
+	FEX_EAST,
+	FEX_NORTH|FEX_WEST,
+	FEX_NORTH|FEX_SOUTH,
+	
+	FEX_NORTH|FEX_EAST,
+	FEX_WEST|FEX_NORTH,
+	FEX_SOUTH,
+	FEX_SOUTH|FEX_EAST,
+	FEX_WEST|FEX_NORTH,
+	
+	FEX_EAST,
+	FEX_WEST|FEX_NORTH|FEX_EAST,
+	FEX_WEST|FEX_NORTH|FEX_EAST,
+	FEX_WEST|FEX_NORTH|FEX_EAST,
+	FEX_WEST
+};
+
+uint8_t forestdungeon_test[] = {
+	0x01,0x02,0x03,0x04,0x05,0x0D
+};
 
 /* Function prototypes goes here */
 void disp_ShowSidebar(void);
@@ -75,13 +126,13 @@ int main(void) {
 	int px,py,ex,ey,cx,cy;
 	mobj_t *mobj;
 	sobj_t *sobj;
-	uint8_t sobj_subtype;
+	uint8_t sobj_maintype;
 	
 	
 	game_Initialize();
 	
 	/* Testing conditions */
-	gen_TestDungeon(20); //Sets positioning
+	mobj_newchar();		//Generates overworld map and warps into first floor
 	gfx_FillScreen(0);
 	gfx_SwapDraw();
 	gfx_FillScreen(0);
@@ -130,7 +181,8 @@ int main(void) {
 				//We hit on something that's not in the sobj table. wat.
 				moving = 0;
 			} else {
-				if ((sobj->type & SOBJTMSKHI) == SOBJ_DOORBASE) {
+				sobj_maintype = sobj->type & SOBJTMSKHI;
+				if (sobj_maintype == SOBJ_DOORBASE) {
 					if (sobj->type & 0x80) {
 						moving = 1;  //Door was already opened. Don't impede path.
 					} else {
@@ -144,7 +196,14 @@ int main(void) {
 							moving = 0;
 						}
 					}
+					
+				} else if (sobj_maintype == SOBJ_WARPBASE) {
+					//Add warp handling. Mostly allow walkover with a traytip
+					//indicating where the warp goes to, and to tell the user
+					//to push ALPHA in order to take the warp out.
+					
 				} else {
+					
 					//Unhandled type. fill in later for other object types.
 					//For now though, cancel movement.
 					moving = 0;
@@ -728,9 +787,6 @@ void game_Initialize(void) {
     tilemap.y_loc       = 4;
     tilemap.x_loc       = 4;
 	tilemap.tiles		= main_tilemap;
-	
-	mobj_newchar();
-	
 	
 }
 

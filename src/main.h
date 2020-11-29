@@ -92,7 +92,14 @@ extern item_t inventory[];
 extern item_t equipment[];
 extern item_t quickbar[];
 extern item_t secondary;
+extern uint8_t forestmap[25];
+extern uint8_t forestdungeon[6];
 
+
+//For debugging purposes
+extern uint8_t forestmap_test_start;
+extern uint8_t forestmap_test[25];
+extern uint8_t forestdungeon_test[6];
 
 
 /* --------------------- external routines in util.asm ---------------------*/

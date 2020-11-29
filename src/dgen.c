@@ -24,6 +24,25 @@ void gen_SetMinimapColorsDefault(void);
 void gen_BufToTilemap(void);
 
 
+//0bDDDFFFFF, D=dungeon (0-8), F=floor (1-31)
+//Forest area: D = 0
+void gen_WarpTo(uint8_t warpdest) {
+	uint8_t dungeonid;
+	uint8_t floorid;
+	
+	if (warpdest == 0xFF) return;	//Should've caught this to end the game.
+	
+	dungeonid	= (warpdest & 0xE0)>>5;
+	floorid		= (warpdest & 0x1F);
+	if (!dungeonid) {
+		//Forest.
+		gen_TestDungeon(40,floorid);
+	} else {
+		//You want to do other things.
+		
+	}
+	return;
+}
 
 
 /* ============================================================================
@@ -32,7 +51,7 @@ void gen_BufToTilemap(void);
 
 
 /* Randomly places rooms around the map, then makes paths between them */
-void gen_TestDungeon(uint8_t roomdensity)  {
+void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 	uint8_t i,j,k,iscollide,x,y,w,h,x2,y2,t,mx,my,nx,ny;
 	uint8_t curenemies,maxenemies;
 	uint8_t *ptr;
@@ -40,6 +59,7 @@ void gen_TestDungeon(uint8_t roomdensity)  {
 	uint32_t temp;
 	room_t *room;
 	sobj_t sobj;
+	uint8_t warpmap,warpdest,warptype;
 	
 	ptr = gen_GetSavedFloorData();
 	f = (floordat_t*) ptr;
@@ -196,6 +216,84 @@ void gen_TestDungeon(uint8_t roomdensity)  {
 				
 			}
 		}
+		//Iterate over rooms and randomly place warps
+		warpmap = 0x01;
+		dbg_sprintf(dbgout,"Warps on floor ID %X\n",floorid);
+		while (warpmap & 0x0FF) {
+			dbg_sprintf(dbgout,"warpmap %X\n",warpmap);
+			warptype = warpdest = 0;
+			if (forestmap[floorid-1] & warpmap) {
+				warptype = SOBJ_WARPGATE|0x80; //Preactivated warpgates
+				switch (warpmap) {
+					case FEX_WEST:
+						warpdest = floorid-1;
+						break;
+					case FEX_EAST:
+						warpdest = floorid+1;
+						break;
+					case FEX_SOUTH:
+						warpdest = floorid+5;
+						break;
+					case FEX_NORTH:
+						warpdest = floorid-5;
+						break;
+					case FEX_EXIT:
+						warpdest = 0xFF;
+						warptype = SOBJ_WARPGATE2;
+						break;
+					case FEX_DUNGEON:
+						for (i=0;(i<6)||(forestdungeon[i]==floorid);++i);
+						warpdest = i<<5+1;
+						warptype = SOBJ_STAIRSDOWN;
+						break;
+					case FEX_FLOORUP:
+						warptype = SOBJ_STAIRSUP;
+						warpdest = 0;	//only valid wrt in-dungeon. This is
+						break;			//not to be done in this generator.
+					case FEX_FLOORDOWN:
+						warptype = SOBJ_STAIRSDOWN;
+						warpdest = 0;	//only valid wrt in-dungeon. This is
+						break;			//not to be done in this generator.
+					default:
+						warptype = SOBJ_WARPHIDDEN;
+						warpdest = 0;	//Impossible for this to reach.
+						break;			//Still... set invalid floor.
+				} 
+				dbg_sprintf(dbgout,"Warpgate loading type %X\n",warptype);
+			}
+			if (warpdest) {
+				dbg_sprintf(dbgout,"Warpgate destination %X\n",warpdest);
+				while (1) {
+					room = &roomlist[randInt(0,numrooms-1)];
+					x = randInt(room->x+1,room->x+room->w-2);
+					y = randInt(room->y+1,room->y+room->h-2);
+					//Rooms should never be so full as to lock this up.
+					//If it is, you should generate fewer things.
+					if (sobj_getentrybypos(x,y)) continue;
+					//Disable warp to the cherry if you do not own
+					//all four mcguffins... erh. gems... of power.
+					//if ((warpdest == 0x0D) && !(pstats.gems^0x0F)) warptype &= 0x7F;
+					scratchsobj.type = warptype;
+					scratchsobj.x = x;
+					scratchsobj.y = y;
+					scratchsobj.data = warpdest;
+					sobj_addentry(&scratchsobj);
+					break;
+				}
+				dbg_sprintf(dbgout,"Warpgate generated\n");
+			}
+			warpmap <<= 1;
+		}
+		//If you're making the central floor of the game, place the cherry somewhere.
+		if (floorid == 0x0D) {
+			//
+			//
+			//
+			//Put Cherry of Yendor someplace.
+			//
+			//
+			//
+		}
 	}
 	
 	/* Write mobile objects */
@@ -207,11 +305,13 @@ void gen_TestDungeon(uint8_t roomdensity)  {
 		//than maxenemies. This is not a bug. maxenemies is intended to be
 		//more of a soft limit. Be sure that there aren't too many rooms, though.
 		for(i=0;i<numrooms;++i) {
-			if (randInt(0,5) != 3) continue;
+			if (randInt(0,5) != 3) continue;	//Only generate in a room on chance
 			room = &roomlist[i];
 			x = randInt(room->x+1,room->x+room->w-2);
 			y = randInt(room->y+1,room->y+room->h-2);
+			if (sobj_getentrybypos(x,y)) continue;	//Don't generate if sobj in way
 			if (!mobj_getentrybypos(x,y)) {
+				//Only generate if another mobj isn't in way
 				scratchmobj.x = x;
 				scratchmobj.y = y;
 				scratchmobj.type = randInt(1,3);
