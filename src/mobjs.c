@@ -18,7 +18,7 @@
 #include "gfx/output/gfx_charequtiles.h"
 
 
-
+mobj_t scratchmobj;
 //playercalc is generated on every floor load and menu exit
 //enemycalc is generated on each battle transaction
 mobjdef_t emptyplayer,playerbase,playercalc,enemycalc;
@@ -38,6 +38,8 @@ mobjdef_t enemydef[] = {
 	{"Dire Rat",S_DIRERAT ,NULL,
 	 20,  0,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
 	{"Squirrel",S_SQUIRREL,NULL,
+	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
+	{"Snake",S_SNAKE,NULL,
 	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
 	
 };
@@ -71,22 +73,22 @@ void mobj_newchar(void) {
 		inventory[j].data = 1;
 	}
 	
-	equipment[0].type = EQU_SNEAKRING;
-	equipment[0].data = 0;
-	equipment[1].type = EQU_RAWRSRING;
-	equipment[1].data = 0;
-	equipment[2].type = EQU_HAT;
-	equipment[2].data = 0;
-	equipment[3].type = EQU_LEATHERARMOR;
-	equipment[3].data = 0;
-	equipment[4].type = EQU_BADTOUCHER;
-	equipment[4].data = 0;
-	equipment[5].type = EQU_SHADOWSWORD;
-	equipment[5].data = 0;
-	equipment[6].type = EQU_NINJABOOTS;
-	equipment[6].data = 0;
-	equipment[7].type = EQU_REFLECTSHIELD;
-	equipment[7].data = 0;
+	//equipment[0].type = EQU_SNEAKRING;
+	//equipment[0].data = 0;
+	//equipment[1].type = EQU_RAWRSRING;
+	//equipment[1].data = 0;
+	//equipment[2].type = EQU_HAT;
+	//equipment[2].data = 0;
+	//equipment[3].type = EQU_LEATHERARMOR;
+	//equipment[3].data = 0;
+	//equipment[4].type = EQU_BADTOUCHER;
+	//equipment[4].data = 0;
+	//equipment[5].type = EQU_SHADOWSWORD;
+	//equipment[5].data = 0;
+	//equipment[6].type = EQU_NINJABOOTS;
+	//equipment[6].data = 0;
+	//equipment[7].type = EQU_REFLECTSHIELD;
+	//equipment[7].data = 0;
 }
 
 void mobj_clear(void) {
@@ -110,6 +112,24 @@ void mobj_rementry(uint8_t index) {
 	}
 	mobjs[i] = empty_mobj;
 }
+
+mobj_t *mobj_getentrybypos(uint8_t x, uint8_t y) {
+	uint8_t i;
+	if (!nummobjs) return NULL;
+	for (i=0; i<nummobjs; ++i) {
+		if ((mobjs[i].x == x) && (mobjs[i].y == y)) {
+				return &mobjs[i];
+		}
+	}
+	return NULL;
+}
+
+mobjdef_t *mobj_getmobjdef(mobj_t *mobj) {
+	if (!mobj->type || (mobj->type+1)>(sizeof(enemydef)/sizeof(enemydef[0])))
+		return &enemydef[0];	//Default to rat if out of range
+	return &enemydef[mobj->type-1];
+}
+
 
 void mobj_recalcplayer(void) {
 	uint8_t i,j,offset;

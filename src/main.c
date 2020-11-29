@@ -69,15 +69,22 @@ void game_Initialize(void);
 int main(void) {
 	int sec,subsec;
 	uint8_t k,kc;
-	uint8_t xpos,ypos,x,y;
+	uint8_t xpos,ypos,x,y,i,color;
 	uint8_t *ptr,t,moving,facing,cycle,ecycle;
-	int px,py,cx,cy;
+	uint8_t enemycollide,sobjcollide;
+	int px,py,ex,ey,cx,cy;
+	mobj_t *mobj;
+	sobj_t *sobj;
+	uint8_t sobj_subtype;
+	
 	
 	game_Initialize();
 	
 	/* Testing conditions */
 	gen_TestDungeon(20); //Sets positioning
+	gfx_FillScreen(0);
 	gfx_SwapDraw();
+	gfx_FillScreen(0);
 	pstats.update = UPD_SIDEBAR;
 	dbg_sprintf(dbgerr,"Curmap location %X\n",&curmap);
 	ecycle = facing = 0;
@@ -111,11 +118,52 @@ int main(void) {
 		*/
 		t = curmap->data[ypos*128+xpos];
 		moving = 1;		//Set to zero if movement is canceled.
+		sobjcollide = enemycollide = 0;
 		//Check if wall collide. If so, cancel movement.
 		if (t<0x40) {
-			//moving = 0;
+			moving = 0;
+		}
+		//Check if sobj collide. If so, check object and see if action needs cancel
+		if (t>=0x80) {
+			sobj = sobj_getentrybypos(xpos,ypos);
+			if (!sobj) {
+				//We hit on something that's not in the sobj table. wat.
+				moving = 0;
+			} else {
+				if ((sobj->type & SOBJTMSKHI) == SOBJ_DOORBASE) {
+					if (sobj->type & 0x80) {
+						moving = 1;  //Door was already opened. Don't impede path.
+					} else {
+						if (sobj->type == SOBJ_DOOR) {
+							sobj->type |= 0x80;	//Open the door.
+							moving = 1;
+						} else {
+							//Door was locked or cannot be opened at this time.
+							//Test later on for other door types, such as if
+							//you have keys that can open this door.
+							moving = 0;
+						}
+					}
+				} else {
+					//Unhandled type. fill in later for other object types.
+					//For now though, cancel movement.
+					moving = 0;
+				}
+				sobj_WriteToMap();	//In case things changed. This is cheap anyway.
+			}
 		}
 		
+		//Check if enemy collide. If so, cancel movement.
+		for (i=0;i<nummobjs;++i) {
+			mobj = &mobjs[i];
+			if ((xpos == mobj->x) && (ypos == mobj->y)) {
+				enemycollide = 1;
+				moving = 0;
+				break;
+			}
+		}
+		//On exit of this loop, mobj will be the enemy that you collided with
+		//only if enemycollide was set to 1.
 		
 		
 
@@ -151,8 +199,17 @@ int main(void) {
 		gfx_TransparentSprite(player0_tiles[facing+(cycle&3)],px-cx,py-cy);
 		gfx_SetClipRegion(0,0,320,240);
 		
-		//Testing enemy animation
-		gfx_Sprite_NoClip(*(enemydef[0].sprobj+((ecycle&0x08)>>3)),12,12);
+		//Draw final state of the enemies
+		gfx_SetClipRegion(4,4,4+224,4+224);
+		color = gfx_SetTransparentColor(charequtiles_palette_offset);
+		for (i=0;i<nummobjs;++i) {
+			mobj = &mobjs[i];
+			ex = mobj->x*16 + 4;
+			ey = mobj->y*16 + 4;
+			gfx_TransparentSprite(*(mobj_getmobjdef(mobj)->sprobj+((ecycle&0x08)>>3)),ex-cx,ey-cy);
+		}
+		gfx_SetTransparentColor(color);
+		gfx_SetClipRegion(0,0,320,240);
 		
 		disp_ShowSidebar();
 		asm_LoadMinimap(xpos,ypos);
@@ -291,8 +348,9 @@ void disp_ShowSidebar(void) {
 
 //Used only in disp_ShowInventory. Not prototyped. It probably ought to be...
 item_t *disp_GetCursorAddress(uint8_t cur) {
-	if (cur&0x80)	return &equipment[cur&0x7F];
-	else			return &inventory[cur];
+	if ((cur&0xC0) == 0xC0)	return &quickbar[cur&0x3F];
+	if ((cur&0x80) == 0x80)	return &equipment[cur&0x7F];
+	else					return &inventory[cur];
 }
 //Used only in disp_ShowInventory. Not prototyped.
 void disp_SwapInvSlots(uint8_t cur, uint8_t prv) {
@@ -354,7 +412,7 @@ void disp_stats(char *s, uint8_t base, int plus) {
 #define disp_diff(member) playerbase.##member##,(playercalc.##member##-playerbase.##member##)
 void disp_ShowInventory(uint8_t state) {
 	uint8_t cursor,prevcursor,update,cursormode;
-	kb_key_t sk,k,pk;
+	kb_key_t sk,k,pk,nk;
 	uint8_t temp,gx,gy,i,t;
 	int x,y;
 	void *ptr;
@@ -377,9 +435,18 @@ void disp_ShowInventory(uint8_t state) {
 		k = (kb_Data[1] & 0xE0) | kb_Data[7];	//Combine dpad and del/mode/2nd
 		sk = (k ^ pk) & k;	//read changes to key state, but only on press.
 		pk = k;				//After that, save actual key state for next run
+		nk = asm_GetNumpad();
 		
-		
-		/* RUN TEST FOR NUMKEYS TO ASSIGN/UNASSIGN INV SLOTS TO/FROM QUICKBAR */
+		//Activate only if pressed numpad in inventory while not already moving stuff
+		if (nk && !state && !cursormode) {
+			t = disp_GetCursorAddress(cursor)->type;
+			if ((0xFF == items_GetItemType(t)) || !t) {
+				//dbg_sprintf(dbgout,"Keyorg: %i\n",nk);
+				disp_SwapInvSlots((nk-1)|0xC0,cursor);
+				pstats.update |= UPD_CURGEAR|UPD_QUICKSET;
+				update = 1;
+			}
+		}
 		
 		
 		if (sk&kb_Mode) {
@@ -420,8 +487,6 @@ void disp_ShowInventory(uint8_t state) {
 						inventory[34].type = 0;
 						inventory[34].data = 0; //Items moved to trashcan are deleted.
 						pstats.update |= UPD_CURGEAR|UPD_QUICKSET;
-						disp_ShowSidebar();
-
 					} else disp_SwapInvSlots(cursor,prevcursor); //undo if failed
 				}
 			} else;
@@ -540,6 +605,7 @@ void disp_ShowInventory(uint8_t state) {
 				disp_stats("idk what will go here.",0,0);
 				disp_stats("No plans yet.",0,0);
 			}
+			disp_ShowSidebar();
 			gfx_SwapDraw();
 			update = 0;
 		}
@@ -584,7 +650,6 @@ char *util_BufInt(int num) {
 	*ptr = 0;
 	slen = strlen(numbuf);
 	lim = slen/2+slen%2;
-	dbg_sprintf(dbgout,"rawrfs %i,%i\n",slen,lim);
 	for (i = 0, j = slen-1; i<lim; ++i, --j) {
 		c = numbuf[i];
 		numbuf[i] = numbuf[j];

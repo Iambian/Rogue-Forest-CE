@@ -11,6 +11,7 @@
 #include "main.h"
 #include "dgen.h"
 #include "sobjs.h"
+#include "mobjs.h"
 #include "gfx/output/gfx_base.h"
 #include "gfx/output/gfx_dtiles.h"
 #include "gfx/output/gfx_ftiles.h"
@@ -33,6 +34,7 @@ void gen_BufToTilemap(void);
 /* Randomly places rooms around the map, then makes paths between them */
 void gen_TestDungeon(uint8_t roomdensity)  {
 	uint8_t i,j,k,iscollide,x,y,w,h,x2,y2,t,mx,my,nx,ny;
+	uint8_t curenemies,maxenemies;
 	uint8_t *ptr;
 	floordat_t *f;
 	uint32_t temp;
@@ -197,11 +199,32 @@ void gen_TestDungeon(uint8_t roomdensity)  {
 	}
 	
 	/* Write mobile objects */
-	
-	//
-	//
-	//
-	//
+	maxenemies = randInt(numrooms,numrooms*2);
+	curenemies = 0;
+
+	while (curenemies<maxenemies) {
+		//This algorithm is a crapshoot. Also, will always have more enemies
+		//than maxenemies. This is not a bug. maxenemies is intended to be
+		//more of a soft limit. Be sure that there aren't too many rooms, though.
+		for(i=0;i<numrooms;++i) {
+			if (randInt(0,5) != 3) continue;
+			room = &roomlist[i];
+			x = randInt(room->x+1,room->x+room->w-2);
+			y = randInt(room->y+1,room->y+room->h-2);
+			if (!mobj_getentrybypos(x,y)) {
+				scratchmobj.x = x;
+				scratchmobj.y = y;
+				scratchmobj.type = randInt(1,3);
+				scratchmobj.flags = 0;
+				scratchmobj.hp = mobj_getmobjdef(&scratchmobj)->maxhp;
+				scratchmobj.mp = mobj_getmobjdef(&scratchmobj)->maxmp;
+				scratchmobj.step = 0;
+				scratchmobj.drop = 0;
+				mobj_addentry(&scratchmobj);
+				++curenemies;
+			}
+		}
+	}
 	
 	/* Place static object tiles on the map */
 	sobj_WriteToMap();

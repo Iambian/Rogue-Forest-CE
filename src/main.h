@@ -48,7 +48,8 @@ typedef struct mobj_st {
 	uint8_t flags;
 	uint8_t hp;
 	uint8_t mp;
-	uint8_t data[2];
+	uint8_t step;
+	uint8_t drop;
 } mobj_t;
 
 //You may want to do bitpacking shenanigans if you want to have more than 255 items.
@@ -99,7 +100,7 @@ char *util_BufInt(int num);
 uint8_t	*asm_SetTile2ColorStart(void);
 void 	asm_LoadMinimap(uint8_t xpos, uint8_t ypos);
 void	asm_InterpolateMap(void);
-
+uint8_t asm_GetNumpad(void);
 
 
 

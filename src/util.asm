@@ -3,6 +3,7 @@
 XDEF _asm_LoadMinimap
 XDEF _asm_SetTile2ColorStart
 XDEF _asm_InterpolateMap
+XDEF _asm_GetNumpad
 
 XREF _gfx_SetColor
 XREF _gfx_Rectangle_NoClip
@@ -28,6 +29,9 @@ _Mov9ToOp1        EQU $020320 ;''
 _DelVarArc        EQU $021434 ;''
 _CreateAppVar     EQU $021330 ;''
 _CreateProtProg   EQU $021334 ;''
+_KbdScan          EQU $020148 ;''
+_GetCSC           EQU $02014C ;''
+
 
 prevDData         EQU $D005A1 ;''
 lFont_record      EQU $D005A4 ;''
@@ -234,15 +238,6 @@ interpolatemap_loop:
       pop   ix
       ret
 
-
-            
-            
-            
-            
-            
-
-
-
 ;top: 07, btm: 03
 interpolate_xform1:
 db $07,$0B,$01,$01,$0A,$03,$01,$01,$06,$06,$03,$00,$06,$06,$03,$00
@@ -281,7 +276,33 @@ db $48,$48,$48,$48,$48,$48,$48,$48,$42,$42,$49,$49,$48,$48,$49,$49
 db $40,$48,$47,$47,$40,$48,$47,$47,$41,$41,$48,$48,$41,$41,$48,$48
 
 
-
-
+;returns 0 for no press. 1-10 for keys [1-9,0]. Blocks until keyrelease
+_asm_GetNumpad:
+      push  ix
+            call  _KbdScan
+            call  _GetCSC
+      pop   ix
+      or    a,a
+      ret   z
+      ld    hl,getnumpad_datatable
+      ld    bc,10
+      cpir
+      jr    z,$+4
+      xor   a,a
+      ret
+      ld    a,c
+      cpl
+      add   a,10+1
+      ret
+getnumpad_datatable:
+;  1  2  3  4  5  6  7  8  9  0
+db 34,26,18,35,27,19,36,28,20,33
+      
+      
+      
+      
+      
+      
+      
 
 
