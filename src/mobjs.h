@@ -68,6 +68,7 @@ typedef struct mobjdef_st {
 extern mobjdef_t emptyplayer,playerbase,playercalc,enemycalc;
 extern mobjdef_t playerdef,enemydef[];
 extern mobj_t scratchmobj;
+extern mobj_t playermobj;
 
 void mobj_newchar(void);
 void mobj_clear(void);

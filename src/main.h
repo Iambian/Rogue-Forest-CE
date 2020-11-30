@@ -16,18 +16,12 @@ typedef struct pstats_st {
 	uint8_t level;
 	int		xp,maxxp;
 	int		food,maxfood;
-	uint8_t hp,maxhp;
-	uint8_t mp,maxmp;
-	uint8_t status;
-	uint8_t strength,speeds,smarts,rawrs;
-	uint8_t attack,defense,evasion,sneaks,magic,reflect;
-	uint8_t mres,fres,eres,pres; //magic,fire,electric,poison resistances
-	uint8_t matk,fatk,eatk,patk; //magic,fire,electric,poison power
 	uint8_t statpoints;
 	uint8_t talentpoints;
 	uint8_t facing;
 	uint8_t walkcycle;	//Used to animate the player sprite when walking
 	uint8_t timer;		//like a walk cycle, except updates regardless of mov't
+	//Other stats located in playermobj and playercalc/playerbase
 	
 } pstats_t; //pstats is the variable being used with this struct
 

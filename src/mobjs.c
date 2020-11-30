@@ -17,8 +17,10 @@
 #include "gfx/output/gfx_ftiles.h"
 #include "gfx/output/gfx_charequtiles.h"
 
+mobj_t playermobj;
 
 mobj_t scratchmobj;
+
 //playercalc is generated on every floor load and menu exit
 //enemycalc is generated on each battle transaction
 mobjdef_t emptyplayer,playerbase,playercalc,enemycalc;
@@ -46,10 +48,33 @@ mobjdef_t enemydef[] = {
 
 void mobj_newchar(void) {
 	uint8_t i,j;
+
+	//Reset inventories
+	for (i=0;i<35;++i) {
+		inventory[i].type = 0;
+		inventory[i].data = 0;
+	}
+	for (i=0;i<8;++i) {
+		equipment[i].type = 0;
+		equipment[i].data = 0;
+	}
+	for (i=0;i<10;++i) {
+		quickbar[i].type = 0;
+		quickbar[i].data = 0;
+	}
 	
+	dbg_sprintf(dbgout,"1 playermobj hp %i\n",playermobj.hp);
+	dbg_sprintf(dbgout,"playermobj mp %i\n",playermobj.mp);
 	//Reset player stats
 	playerbase = playerdef;
+	mobj_recalcplayer();
+	playermobj = empty_mobj;
+	playermobj.type = 0xFF;
+	playermobj.hp = playercalc.maxhp;
+	playermobj.mp = playercalc.maxmp;
 	
+	dbg_sprintf(dbgout,"2 playermobj hp %i\n",playermobj.hp);
+	dbg_sprintf(dbgout,"playermobj mp %i\n",playermobj.mp);
 	//Generate overworld dungeon and set player stats accordingly.
 	pstats.level = 0;
 	pstats.xp = 0;
@@ -70,23 +95,10 @@ void mobj_newchar(void) {
 	/* DEBUG DEBUG DEBUG MANUAL SETTING OF OVERWORLD */
 	forestmap_start = forestmap_test_start;
 	memcpy(forestmap,forestmap_test,sizeof(forestmap));
-	memcpy(forestdungeon,forestdungeon_test,sizeof(forestmap));
+	memcpy(forestdungeon,forestdungeon_test,sizeof(forestdungeon));
 	
 	gen_WarpTo(forestmap_start);
 	
-	//Reset inventories
-	for (i=0;i<35;++i) {
-		inventory[i].type = 0;
-		inventory[i].data = 0;
-	}
-	for (i=0;i<8;++i) {
-		equipment[i].type = 0;
-		equipment[i].data = 0;
-	}
-	for (i=0;i<10;++i) {
-		quickbar[i].type = 0;
-		quickbar[i].data = 0;
-	}
 	/* DEBUGGING -- SET PLAYER INVENTORY WITH STUFFS */
 	
 	for (j=0,i=1;i<64;i+=4,++j) {
@@ -160,6 +172,7 @@ void mobj_recalcplayer(void) {
 	uint8_t i,j,offset;
 	int t,enchantval;
 	itemdef_t *item;
+	
 	playercalc = playerbase;
 	return;	//Okay maybe memory is getting corrupted someplace
 	for (i = 0; i<8; ++i) {

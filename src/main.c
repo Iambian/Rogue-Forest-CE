@@ -137,6 +137,7 @@ int main(void) {
 	
 	/* Testing conditions */
 	mobj_newchar();		//Generates overworld map and warps into first floor
+	
 	gfx_FillScreen(0);
 	gfx_SwapDraw();
 	gfx_FillScreen(0);
@@ -398,30 +399,30 @@ void disp_ShowSidebar(void) {
 	if (u|UPD_MINI) {
 		gfx_SetTextFGColor(COLOR_WHITE);
 		gfx_SetTextXY(MAPAREA_X+1,MAPAREA_Y+11);
-		disp_PrintDungeonID();
-		//Insert area text
+		disp_PrintDungeonID();  //Insert area text
 		gfx_SetTextFGColor(COLOR_WHITE);
 		gfx_SetTextXY(MAPFLOOR_X+1,MAPFLOOR_Y+11);
-		//Insert floor text
-		disp_PrintDungeonFloor();
+		disp_PrintDungeonFloor(); //Insert floor text
 	}
 	if (u|UPD_HP) {
+		mobj_recalcplayer();
 		//Draw bar at HPMP_X+2,HPMP_Y+2, w80,h9. COLOR_GREEN
 		gfx_SetTextFGColor(COLOR_WHITE);
-		w = 8+util_GetNumWidth(pstats.hp)+util_GetNumWidth(pstats.maxhp);
+		w = 8+util_GetNumWidth(playermobj.hp)+util_GetNumWidth(playercalc.maxhp);
 		gfx_SetTextXY(sidebar_center(w),HPMP_Y+3);
-		gfx_PrintUInt(pstats.hp,1);
+		gfx_PrintUInt(playermobj.hp,1);
 		gfx_PrintChar('/');
-		gfx_PrintUInt(pstats.maxhp,1);
+		gfx_PrintUInt(playercalc.maxhp,1);
 	}
 	if (u|UPD_MP) {
+		mobj_recalcplayer();
 		//Draw bar at HPMP_X+2,HPMP_Y+21, w80,h9. COLOR_BLUE
 		gfx_SetTextFGColor(COLOR_WHITE);
-		w = 8+util_GetNumWidth(pstats.mp)+util_GetNumWidth(pstats.maxmp);
+		w = 8+util_GetNumWidth(playermobj.mp)+util_GetNumWidth(playercalc.maxmp);
 		gfx_SetTextXY(sidebar_center(w),HPMP_Y+22);
-		gfx_PrintUInt(pstats.mp,1);
+		gfx_PrintUInt(playermobj.mp,1);
 		gfx_PrintChar('/');
-		gfx_PrintUInt(pstats.maxmp,1);
+		gfx_PrintUInt(playercalc.maxmp,1);
 	}
 	if (u|UPD_CURGEAR) {
 		t = equipment[5].type;
