@@ -38,12 +38,19 @@ void sobj_addentry(sobj_t* sobj) {
 		++numsobjs;
 	}
 }
+//TIL: sobj-sobjs results in an index rather than the result of
+//subtracting two addresses.
+uint8_t sobj_getindex(sobj_t *sobj) {
+	return sobj-sobjs;
+}
 void sobj_rementry(uint8_t index) {
 	uint8_t i;
 	for (i=index;i<250;++i) {
 		sobjs[i] = sobjs[i+1];
+		//memcpy(&sobjs[i],&sobjs[i+1],sizeof(empty_sobj));
 	}
 	sobjs[i] = empty_sobj;
+	--numsobjs;
 }
 
 sobj_t *sobj_getentrybypos(uint8_t x, uint8_t y) {
@@ -138,7 +145,12 @@ void sobj_WriteToMap(void) {
 		} else if (tyh == SOBJ_TRAPBASE) {
 		/* ITEMS */
 		} else if (tyh == SOBJ_ITEMBASE) {
-			
+			if (tyl == (SOBJ_MCGUFFIN&SOBJTMSKLO)) {
+				//data in sobj indicates which mcguffin. animates by +[0,1].
+				t = TILE_MCGUFFIN1+s->data*2+(pstats.timer&1);
+			} else if (tyl == (SOBJ_CHERRY&SOBJTMSKLO)) {
+				t = TILE_LCHERRY+(pstats.timer&1);
+			}
 		/* unhandled messes */
 		} else {
 			t = 0;

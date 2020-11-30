@@ -118,7 +118,7 @@ uint8_t util_GetNumWidth(int num);	//Returns text width of digits were it displa
 void game_Initialize(void);
 void disp_PrintDungeonID(void);		//Displays forestarea if in forest.
 void disp_PrintDungeonFloor(void);	//If in forest, does not display anything
-
+void disp_Notice(char *s);
 
 int main(void) {
 	int sec,subsec;
@@ -226,6 +226,21 @@ int main(void) {
 							continue;	//Restart the loop
 						}
 					}
+				} else if (sobj_maintype == SOBJ_ITEMBASE) {
+					if ((kb_Data[2] & kb_Alpha) && (sobj->type == SOBJ_CHERRY)) {
+						sobj_rementry(sobj_getindex(sobj));
+						pstats.hascherry = 1;
+						curmap->data[ypos*128+xpos] = 0x48;	//grass tile.
+						sobj = NULL;
+						disp_Notice("You ate the Cherry of Yendor.\nIt was delicious.");
+						
+						//
+						//
+						//FOR NOW, JUST ROLL THE END CREDITS AND CALL IT A DAY.
+						//
+						//
+						
+					}
 				} else {
 					
 					//Unhandled type. fill in later for other object types.
@@ -234,7 +249,7 @@ int main(void) {
 				}
 				sobj_WriteToMap();	//In case things changed. This is cheap anyway.
 			}
-		}
+		} else sobj = NULL;
 		
 		//Check if enemy collide. If so, cancel movement.
 		for (i=0;i<nummobjs;++i) {
@@ -324,6 +339,8 @@ int main(void) {
 				gfx_PrintString("dungeon ");
 				gfx_PrintUInt(AREAHIUNCONV(i),1);
 			}
+		} else if (sobj && (sobj->type == SOBJ_CHERRY)) {
+			gfx_PrintString("[ALPHA] to eat Legendary Cherry of Yendor");
 		} else if (0) {
 			//
 			//Mayhaps put something else here in bottom bar if other
@@ -489,7 +506,26 @@ uint8_t disp_IsSlotGood(uint8_t cursor) {
 	} else return 1;	//Items in inventory slots are always valid
 }
 
-
+void disp_Notice(char *s) {
+	uint8_t c;
+	
+	c = gfx_SetColor(COLOR_BLACK);
+	gfx_FillRectangle_NoClip(4,104,224,24);
+	gfx_SetColor(COLOR_GUNMETALGRAY);
+	gfx_FillRectangle_NoClip(6,106,220,20);
+	gfx_SetColor(c);
+	c = gfx_SetTextFGColor(COLOR_WHITE);
+	gfx_SetTextXY(8,108);
+	while (*s) {
+		if (*s == '\n')	gfx_SetTextXY(8,117);
+		else			gfx_PrintChar(*s);
+		++s;
+	}
+	gfx_SwapDraw();
+	while (kb_AnyKey());	//wait until all keys are released
+	while (!kb_AnyKey());	//wait until a key is pushed. 
+	while (kb_AnyKey());	//wait until all keys are released again.
+}
 //Used only in disp_ShowInventory. Not prototyped.
 void disp_InvCursor(uint8_t cursor) {
 	uint8_t t;

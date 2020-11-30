@@ -23,7 +23,7 @@
 #define SOBJ_WARPPAD	SOBJ_WARPBASE+2
 #define SOBJ_WARPGATE2	SOBJ_WARPBASE+3
 #define SOBJ_STAIRSUP	SOBJ_WARPBASE+4
-#define SOBJ_STAIRSDOWN	SOBJ_WARPBASE+4
+#define SOBJ_STAIRSDOWN	SOBJ_WARPBASE+5
 
 #define SOBJ_TRAPBASE SOBJTYPECAT(2)
 #define SOBJ_TRAPSPIKES	SOBJ_TRAPBASE+0
@@ -45,6 +45,7 @@
 #define SOBJ_HIDDENKITM	SOBJ_ITEMBASE+3
 #define SOBJ_FOOD		SOBJ_ITEMBASE+4
 #define SOBJ_MOARFOOD	SOBJ_ITEMBASE+5
+#define SOBJ_CHERRY		SOBJ_ITEMBASE+6
 
 extern sobj_t scratchsobj;
 
@@ -52,6 +53,7 @@ extern sobj_t scratchsobj;
 void sobj_clear(void);
 void sobj_addentry(sobj_t* sobj);
 void sobj_rementry(uint8_t index);
+uint8_t sobj_getindex(sobj_t *sobj);
 sobj_t *sobj_getentrybypos(uint8_t x, uint8_t y);
 sobj_t *sobj_getwarpbydest(uint8_t dest);
 void sobj_WriteToMap(void);

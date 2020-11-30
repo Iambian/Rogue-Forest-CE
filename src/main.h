@@ -21,6 +21,8 @@ typedef struct pstats_st {
 	uint8_t facing;
 	uint8_t walkcycle;	//Used to animate the player sprite when walking
 	uint8_t timer;		//like a walk cycle, except updates regardless of mov't
+	uint8_t hascherry;	//Did you get the Legendary Cherry of Yendor?
+	
 	//Other stats located in playermobj and playercalc/playerbase
 	
 } pstats_t; //pstats is the variable being used with this struct

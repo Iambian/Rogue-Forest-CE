@@ -64,11 +64,12 @@ void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 	room_t *room;
 	sobj_t sobj;
 	uint8_t warpmap,warpdest,warptype;
+	void *vptr;
 	
 	ptr = gen_GetSavedFloorData();
 	f = (floordat_t*) ptr;
 	sobj_clear();
-	//mobj_clear();
+	mobj_clear();
 	
 	/* Generate floor map */
 	if (f)	temp = f->seed;
@@ -252,6 +253,7 @@ void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 					case FEX_EXIT:
 						warpdest = 0xFF;
 						warptype = SOBJ_WARPGATE2;
+						if (pstats.hascherry) warptype |= 0x80;
 						break;
 					case FEX_DUNGEON:
 						for (i=0;(i<6)||(forestdungeon[i]==floorid);++i);
@@ -297,14 +299,21 @@ void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 			warpmap <<= 1;
 		}
 		//If you're making the central floor of the game, place the cherry somewhere.
-		if (floorid == 0x0D) {
-			//
-			//
-			//
-			//Put Cherry of Yendor someplace.
-			//
-			//
-			//
+		if ((floorid == 0x0D) && (!pstats.hascherry)) {	//There can only be one
+			while (1) {
+				room = &roomlist[randInt(0,numrooms-1)];
+				x = randInt(room->x+1,room->x+room->w-2);
+				y = randInt(room->y+1,room->y+room->h-2);
+				if (sobj_getentrybypos(x,y)) continue;
+				if (mobj_getentrybypos(x,y)) continue;
+				scratchsobj.type = SOBJ_CHERRY;
+				scratchsobj.x = x;
+				scratchsobj.y = y;
+				scratchsobj.data = 0xFF;	//maximum cherry flavoring
+				sobj_addentry(&scratchsobj);
+				dbg_sprintf(dbgout,"Cherry generated at (%i,%i)\n",x,y);
+				break;
+			}
 		}
 	}
 	
@@ -345,10 +354,13 @@ void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 	
 	//Coming back out of a dungeon
 	if (pstats.dungeonid) {
-		memcpy(&sobj,sobj_getwarpbydest(AREAHICONV(pstats.dungeonid)+pstats.dungeonfloor),sizeof sobj);
+		vptr = sobj_getwarpbydest(AREAHICONV(pstats.dungeonid)+pstats.dungeonfloor);
 	} else {
-		memcpy(&sobj,sobj_getwarpbydest(AREA_FOREST|pstats.forestarea),sizeof sobj);
+		vptr = sobj_getwarpbydest(AREA_FOREST|pstats.forestarea);
 	}
+	dbg_sprintf(dbgout,"Location of warpto: %X\n",vptr);
+	dbg_sprintf(dbgout,"Location of warpto: %X\n",vptr);
+	memcpy(&sobj,vptr,sizeof sobj);
 	pstats.x = sobj.x;
 	pstats.y = sobj.y;
 	

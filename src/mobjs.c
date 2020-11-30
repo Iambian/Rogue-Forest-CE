@@ -88,11 +88,14 @@ void mobj_newchar(void) {
 	pstats.facing = 0;
 	pstats.walkcycle = 0;
 	pstats.timer = 0;
+	pstats.hascherry = 0;
 	//
 	// implement generation of forest. probably offload it to somewhere in dgen
 	//
 	
 	/* DEBUG DEBUG DEBUG MANUAL SETTING OF OVERWORLD */
+	pstats.forestarea = 0x0D;		//Test cherry generation
+	forestmap_test_start = 0x0E;	//by placing player next to ending.
 	forestmap_start = forestmap_test_start;
 	memcpy(forestmap,forestmap_test,sizeof(forestmap));
 	memcpy(forestdungeon,forestdungeon_test,sizeof(forestdungeon));
@@ -142,12 +145,18 @@ void mobj_addentry(mobj_t* mobj) {
 		++nummobjs;
 	}
 }
+
+uint8_t mobj_getindex(mobj_t *mobj) {
+	return mobj-mobjs;
+}
+
 void mobj_rementry(uint8_t index) {
 	uint8_t i;
 	for (i=index;i<250;++i) {
 		mobjs[i] = mobjs[i+1];
 	}
 	mobjs[i] = empty_mobj;
+	--nummobjs;
 }
 
 mobj_t *mobj_getentrybypos(uint8_t x, uint8_t y) {
