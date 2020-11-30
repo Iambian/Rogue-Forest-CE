@@ -59,7 +59,7 @@ void mobj_newchar(void) {
 	pstats.dungeonfloor = 0;
 	pstats.talentpoints = 0;
 	pstats.statpoints = 0;
-	pstats.forestarea = 0;
+	pstats.forestarea = 0xFF;	//Previous warp goes to outside world
 	pstats.facing = 0;
 	pstats.walkcycle = 0;
 	pstats.timer = 0;
@@ -68,11 +68,11 @@ void mobj_newchar(void) {
 	//
 	
 	/* DEBUG DEBUG DEBUG MANUAL SETTING OF OVERWORLD */
-	pstats.forestarea = forestmap_test_start;
+	forestmap_start = forestmap_test_start;
 	memcpy(forestmap,forestmap_test,sizeof(forestmap));
 	memcpy(forestdungeon,forestdungeon_test,sizeof(forestmap));
 	
-	gen_WarpTo(pstats.forestarea);
+	gen_WarpTo(forestmap_start);
 	
 	//Reset inventories
 	for (i=0;i<35;++i) {
@@ -161,6 +161,7 @@ void mobj_recalcplayer(void) {
 	int t,enchantval;
 	itemdef_t *item;
 	playercalc = playerbase;
+	return;	//Okay maybe memory is getting corrupted someplace
 	for (i = 0; i<8; ++i) {
 		if (equipment[i].type) {
 			item = &equipdefs[equipment[i].type];

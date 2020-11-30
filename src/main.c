@@ -58,6 +58,7 @@ item_t quickbar[10];
 item_t secondary;
 uint8_t forestmap[25];		//Exitmap for foresting. Trailing entry indicates starting tile
 uint8_t forestdungeon[6];	//Locations in forest of dungeons
+uint8_t forestmap_start;
 
 /* TEST MAP S=START, C=CHERRY
 /-+-+-+-+-\
@@ -66,7 +67,7 @@ uint8_t forestdungeon[6];	//Locations in forest of dungeons
 | |   | | |
 | +-+-+ + +
 | | |C  | |
-| +-+-+-+ +
+| + +-+-+ +
 |   | |   |
 |-+ + + +-+
 |         |
@@ -94,7 +95,7 @@ uint8_t forestmap_test[] = {
 	FEX_NORTH|FEX_SOUTH,
 	
 	FEX_NORTH|FEX_EAST,
-	FEX_WEST|FEX_NORTH,
+	FEX_WEST|FEX_NORTH|FEX_SOUTH,
 	FEX_SOUTH,
 	FEX_SOUTH|FEX_EAST,
 	FEX_WEST|FEX_NORTH,
@@ -115,6 +116,8 @@ void disp_ShowSidebar(void);
 void disp_ShowInventory(uint8_t state);
 uint8_t util_GetNumWidth(int num);	//Returns text width of digits were it displayed
 void game_Initialize(void);
+void disp_PrintDungeonID(void);		//Displays forestarea if in forest.
+void disp_PrintDungeonFloor(void);	//If in forest, does not display anything
 
 
 int main(void) {
@@ -127,6 +130,7 @@ int main(void) {
 	mobj_t *mobj;
 	sobj_t *sobj;
 	uint8_t sobj_maintype;
+	uint8_t onwarp;
 	
 	
 	game_Initialize();
@@ -139,6 +143,8 @@ int main(void) {
 	pstats.update = UPD_SIDEBAR;
 	dbg_sprintf(dbgerr,"Curmap location %X\n",&curmap);
 	ecycle = facing = 0;
+	sobj = NULL; //So the compiler doesn't complain
+	mobj = NULL; //Also so the compiler doesn't complain
 	
 	while (1) {
 		kb_Scan();
@@ -168,11 +174,12 @@ int main(void) {
 			into to perform an action (or no action if one cannot occur. e.g. wall)
 		*/
 		t = curmap->data[ypos*128+xpos];
+		//dbg_sprintf(dbgout,"Current tile: %X\n",t);
 		moving = 1;		//Set to zero if movement is canceled.
-		sobjcollide = enemycollide = 0;
+		onwarp = sobjcollide = enemycollide = 0;
 		//Check if wall collide. If so, cancel movement.
 		if (t<0x40) {
-			moving = 0;
+			//moving = 0;
 		}
 		//Check if sobj collide. If so, check object and see if action needs cancel
 		if (t>=0x80) {
@@ -198,10 +205,26 @@ int main(void) {
 					}
 					
 				} else if (sobj_maintype == SOBJ_WARPBASE) {
-					//Add warp handling. Mostly allow walkover with a traytip
-					//indicating where the warp goes to, and to tell the user
-					//to push ALPHA in order to take the warp out.
-					
+					onwarp = 1;
+					//If push alpha while on top of activated warp tile
+					if ((kb_Data[2] & kb_Alpha) && (sobj->type & 0x80)) {
+						gfx_FillScreen(COLOR_BLACK);
+						gfx_SwapDraw();
+						if (sobj->data == 0xFF) {
+							//
+							// Roll game ending
+							//
+						} else {
+							gen_WarpTo(sobj->data);
+							gfx_FillScreen(COLOR_BLACK);
+							gfx_SwapDraw();
+							gfx_FillScreen(COLOR_BLACK);
+							gfx_SwapDraw();
+							while (kb_AnyKey()); //wait until key release
+							pstats.update = UPD_SIDEBAR;
+							continue;	//Restart the loop
+						}
+					}
 				} else {
 					
 					//Unhandled type. fill in later for other object types.
@@ -269,20 +292,50 @@ int main(void) {
 		}
 		gfx_SetTransparentColor(color);
 		gfx_SetClipRegion(0,0,320,240);
+		//Animate static tiles. that which does animate.
+		
+		if (ecycle&0x07 == 0x07) {
+			++pstats.timer;
+			sobj_WriteToMap();
+		}
 		
 		disp_ShowSidebar();
 		asm_LoadMinimap(xpos,ypos);
-		/* Testing */
+		
 		gfx_SetColor(COLOR_BLACK);
 		gfx_SetTextFGColor(COLOR_WHITE);
-		gfx_FillRectangle(4,LCD_HEIGHT-10,200,8);
 		gfx_SetTextXY(4,LCD_HEIGHT-10);
-		gfx_PrintUInt(xpos,3);
-		gfx_PrintString(", ");
-		gfx_PrintUInt(ypos,3);
-		gfx_PrintString(" -- dbg --");
-		gfx_PrintUInt(numsobjs,1);
-		
+		gfx_FillRectangle(4,LCD_HEIGHT-10,LCD_WIDTH-4,8);
+		if (onwarp) {
+			if (sobj->type&0x80) {
+				gfx_PrintString("Press [ALPHA] to warp to ");
+			} else {
+				gfx_PrintString("Inactive warp gate to ");
+			}
+			i = sobj->data;
+			if ((i&AREAHIMASK) == AREA_FOREST) {
+				gfx_PrintString("forest ");
+				gfx_PrintChar((i-1)%5+'A');
+				gfx_PrintChar((i-1)/5+'1');
+			} else if (i==0xFF) {
+				gfx_PrintString("forest exit");
+			} else {
+				gfx_PrintString("dungeon ");
+				gfx_PrintUInt(AREAHIUNCONV(i),1);
+			}
+		} else if (0) {
+			//
+			//Mayhaps put something else here in bottom bar if other
+			//conditions match?
+			//
+		} else {
+			/* Testing */
+			gfx_PrintUInt(xpos,3);
+			gfx_PrintString(", ");
+			gfx_PrintUInt(ypos,3);
+			gfx_PrintString(" -- dbg --");
+			gfx_PrintUInt(numsobjs,1);
+		}
 		gfx_SwapDraw();
 	}
 	
@@ -345,11 +398,12 @@ void disp_ShowSidebar(void) {
 	if (u|UPD_MINI) {
 		gfx_SetTextFGColor(COLOR_WHITE);
 		gfx_SetTextXY(MAPAREA_X+1,MAPAREA_Y+11);
+		disp_PrintDungeonID();
 		//Insert area text
 		gfx_SetTextFGColor(COLOR_WHITE);
 		gfx_SetTextXY(MAPFLOOR_X+1,MAPFLOOR_Y+11);
 		//Insert floor text
-
+		disp_PrintDungeonFloor();
 	}
 	if (u|UPD_HP) {
 		//Draw bar at HPMP_X+2,HPMP_Y+2, w80,h9. COLOR_GREEN
@@ -674,6 +728,34 @@ void disp_ShowInventory(uint8_t state) {
 	return;
 }
 
+void disp_PrintDungeonID(void) {
+	if (pstats.dungeonid) {
+		gfx_PrintUInt(pstats.dungeonid,1);
+	} else {
+		gfx_PrintChar((pstats.forestarea-1)%5+'A');
+		gfx_PrintChar((pstats.forestarea-1)/5+'1');
+	}
+}
+void disp_PrintDungeonFloor(void) {
+	if (pstats.dungeonid) gfx_PrintUInt(pstats.dungeonfloor,2);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -716,7 +798,6 @@ char *util_BufInt(int num) {
 	}
 	return numbuf;
 }
-
 
 uint8_t util_GetNumWidth(int num) {
 	if (num<10) 	return (8*1);

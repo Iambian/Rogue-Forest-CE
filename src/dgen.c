@@ -36,10 +36,14 @@ void gen_WarpTo(uint8_t warpdest) {
 	floorid		= (warpdest & 0x1F);
 	if (!dungeonid) {
 		//Forest.
-		gen_TestDungeon(40,floorid);
+		gen_TestDungeon(40,floorid); //Uses previous value of forestarea
+		pstats.forestarea = floorid;
+		pstats.dungeonid = 0;
+		pstats.dungeonfloor = 0;
 	} else {
-		//You want to do other things.
-		
+		pstats.dungeonid = dungeonid;
+		pstats.dungeonfloor = floorid;
+		//You want to do other things. Like actually generate dungeon floors.
 	}
 	return;
 }
@@ -80,8 +84,14 @@ void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 		for (i = 0; i < roomdensity; ++i) {
 			w = randInt(5,20);
 			h = randInt(5,20);
+			/*
 			x = randInt(3,125-w); // A slight distance away from the edges to
 			y = randInt(3,125-h); // keep rooms from being adjacent to map bounds
+			*/
+			/* A much more restricted thing because maps are too large for testing */
+			x = randInt(32,96-w);
+			y = randInt(32,96-h);
+			
 			iscollide = 0;
 			for (j = 0; j < NUMROOMS_MAX; ++j) {
 				room = &roomlist[j];
@@ -156,7 +166,9 @@ void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 	memcpy(&main_tilemap[0],DL_tree3_tiles,sizeof(gfx_sprite_t*)*DL_tree3_tiles_num);
 	memcpy(&main_tilemap[64],DL_floor4_tiles,sizeof(gfx_sprite_t*)*DL_floor4_tiles_num);
 	
-	memcpy(&main_tilemap[FLOORBASE],floorstuff_tiles,sizeof(gfx_sprite_t*)*consumables_tiles_num);
+	memcpy(&main_tilemap[FLOORBASE],floorstuff_tiles,sizeof(gfx_sprite_t*)*floorstuff_tiles_num);
+	memcpy(&main_tilemap[KITEMEBASE],food_kitems_tiles,sizeof(gfx_sprite_t*)*food_kitems_tiles_num);
+	
 	
 	/* Write immutable/nonsavable static objects, if any. e.g. decorations */
 	
@@ -218,11 +230,11 @@ void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 		}
 		//Iterate over rooms and randomly place warps
 		warpmap = 0x01;
-		dbg_sprintf(dbgout,"Warps on floor ID %X\n",floorid);
+		dbg_sprintf(dbgout,"*** Warps on floor ID %X\n",floorid);
 		while (warpmap & 0x0FF) {
-			dbg_sprintf(dbgout,"warpmap %X\n",warpmap);
 			warptype = warpdest = 0;
 			if (forestmap[floorid-1] & warpmap) {
+				dbg_sprintf(dbgout,"warpmap %X\n",warpmap);
 				warptype = SOBJ_WARPGATE|0x80; //Preactivated warpgates
 				switch (warpmap) {
 					case FEX_WEST:
@@ -330,28 +342,15 @@ void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 	sobj_WriteToMap();
 	
 	
-
-	/* DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG */
-	/* DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG */
-	/* DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG */
-	//Pick a spawn location. Any location. We have to test player stuff NOW.
-	for (y = 0; y<128; ++y) {
-		for (x = 0; x<128; ++x) {
-			t = curmap->data[y*128+x];
-			if ((t>0x46) && (t<0x80)) {
-				pstats.x = x;
-				pstats.y = y;
-				pstats.subx = pstats.suby = 0;
-				goto TESTDUNGEONGEN_LOOPEND;
-				//Haha lookit mah goto. My very first Truly Wrong Thing in C.
-			}
-		}
+	
+	//Coming back out of a dungeon
+	if (pstats.dungeonid) {
+		memcpy(&sobj,sobj_getwarpbydest(AREAHICONV(pstats.dungeonid)+pstats.dungeonfloor),sizeof sobj);
+	} else {
+		memcpy(&sobj,sobj_getwarpbydest(AREA_FOREST|pstats.forestarea),sizeof sobj);
 	}
-TESTDUNGEONGEN_LOOPEND: ;
-	
-	
-	
-	
+	pstats.x = sobj.x;
+	pstats.y = sobj.y;
 	
 }
 

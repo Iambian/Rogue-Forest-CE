@@ -71,6 +71,19 @@
 #define TILE_LAMP			(FLOORBASE+45)
 #define TILE_KEYCARD		(FLOORBASE+46)
 #define TILE_CANDLES		(FLOORBASE+47)
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#define KITEMEBASE 0xC0
+
+#define TILE_MCGUFFIN1 (KITEMEBASE+0)
+#define TILE_MCGUFFIN2 (KITEMEBASE+2)
+#define TILE_MCGUFFIN3 (KITEMEBASE+4)
+#define TILE_MCGUFFIN4 (KITEMEBASE+6)
+#define TILE_SMOLFOOD  (KITEMEBASE+8)
+#define TILE_MOREFOOD  (KITEMEBASE+9)
+#define TILE_BIGFOOD   (KITEMEBASE+10)
+#define TILE_ISSAFEAST (KITEMEBASE+11)
+#define TILE_LCHERRY   (KITEMEBASE+12)
+
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 //map exit macros

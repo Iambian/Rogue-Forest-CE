@@ -105,6 +105,7 @@ void sobj_WriteToMap(void) {
 			} else if (tyl == (SOBJ_STAIRSDOWN&SOBJTMSKLO)) {
 				t = TILE_STAIRSDOWN;
 			} else {
+				t = TILE_CANDLES;  //The thing you know because is wrong
 			}
 			
 			if ((tyl == (SOBJ_WARPGATE&SOBJTMSKLO)) || (tyl == (SOBJ_WARPGATE2&SOBJTMSKLO))) {
