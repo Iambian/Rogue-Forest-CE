@@ -89,7 +89,7 @@ _asm_LoadMinimap:       ;-3
                   ex    de,hl       ;address to curmap in DE
                   ;Get screen render address. Oh. This offset is hardcoded. Woo.
                   ld    bc,(DRAW_BUFFER)
-                  ld    iy,(320*37)+234
+                  ld    iy,(320*39)+234
                   add   iy,bc
                   ;Get mapper
                   call  _asm_SetTile2ColorStart

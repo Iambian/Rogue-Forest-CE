@@ -65,7 +65,7 @@ typedef struct mobjdef_st {
 #define S_KING		&(characters_tiles_data[78])
 
 #define MSTAT_SPOTTED	(1<<0)
-#define MSTAT_RESERVED1 (1<<1)
+#define MSTAT_ISMOVING  (1<<1)
 #define MSTAT_RESERVED2 (1<<2)
 #define MSTAT_RESERVED3 (1<<3)
 #define MSTAT_RESERVED4 (1<<4)

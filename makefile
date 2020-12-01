@@ -5,10 +5,10 @@
 # Set COMPRESSED to "YES" to create a compressed program
 # ----------------------------
 
-NAME        ?= AAAAMAPS
+NAME        ?= ROFOREST
 COMPRESSED  ?= NO
 ICON        ?= icon.png
-DESCRIPTION ?= "Rogue Forest Mapgen Demo"
+DESCRIPTION ?= "CFD LLC: Rogue Forest"
 
 # ----------------------------
 # Other Options (Advanced)

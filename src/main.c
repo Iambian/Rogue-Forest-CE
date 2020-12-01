@@ -62,18 +62,19 @@ uint8_t forestmap[25];		//Exitmap for foresting. Trailing entry indicates starti
 uint8_t forestdungeon[6];	//Locations in forest of dungeons
 uint8_t forestmap_start;
 
-/* TEST MAP S=START, C=CHERRY
-/-+-+-+-+-\
-|S    |   |
-| +-+ + + +
-| |   | | |
-| +-+-+ + +
-| | |C  | |
-| + +-+-+ +
-|   | |   |
-|-+ + + +-+
-|         |
-\-+-+-+-+-/
+/* TEST MAP S=START, X=CHERRY
+   A B C D E
+  /-+-+-+-+-\
+1 |S    |   |
+  | +-+ + + +
+2 | |   | | |
+  | +-+-+ + +
+3 | | |X  | |
+  | + +-+-+ +
+4 |   | |   |
+  |-+ + + +-+
+5 |         |
+  \-+-+-+-+-/
 */
 
 uint8_t forestmap_test_start = 0x01;
@@ -128,14 +129,15 @@ int  disp_SetCenter(char *s);
 uint8_t disp_ShowTitleScreen(void);
 void disp_ShowCredits(void);
 void disp_Menu(char **options,uint8_t ypos,uint8_t curpos,uint8_t maxentries);
+uint8_t disp_ClampCoord(uint8_t coord);
 
 int main(void) {
 	int sec,subsec;
 	uint8_t k,kc;
-	uint8_t xpos,ypos,x,y,i,color;
+	uint8_t xpos,ypos,x,y,i,j,color;
 	uint8_t *ptr,t,moving,facing,cycle,ecycle;
 	uint8_t enemycollide,sobjcollide;
-	int px,py,ex,ey,cx,cy;
+	int px,py,ex,ey,cx,cy,sx,sy,dx,dy,ndx,ndy;
 	mobj_t *mobj;
 	sobj_t *sobj;
 	uint8_t sobj_maintype;
@@ -157,7 +159,7 @@ int main(void) {
 	ecycle = facing = 0;
 	sobj = NULL; //So the compiler doesn't complain
 	mobj = NULL; //Also so the compiler doesn't complain
-	state = 0;
+	state = 3;
 	curoption = 0;
 	while (1) {
 		kb_Scan();
@@ -198,22 +200,33 @@ int main(void) {
 			ypos = pstats.y;
 			
 			cycle = 0;
-			if (( k & kb_Left) && (xpos>0)) 	{ --xpos; facing=8;  }
-			if (( k & kb_Right) && (xpos<127))	{ ++xpos; facing=4;  }
-			if (( k & kb_Up)   && (ypos>0)) 	{ --ypos; facing=12; }
-			if (( k & kb_Down) && (ypos<127))  	{ ++ypos; facing=0;  }
-			
-			/*	Check for collision. If a collision has occurred, check what you ran
-				into to perform an action (or no action if one cannot occur. e.g. wall)
-			*/
-			t = curmap->data[ypos*128+xpos];
-			//dbg_sprintf(dbgout,"Current tile: %X\n",t);
-			moving = 1;		//Set to zero if movement is canceled.
-			onwarp = sobjcollide = enemycollide = 0;
-			//Check if wall collide. If so, cancel movement.
-			if (t<0x40) {
-				//moving = 0;
+			//The series of wall checks ensures that the player can slide diagonally
+			//against a wall while still maintaining checks for objects in the way
+			if (( k & kb_Left) && (xpos>0)) {
+				if (NOCLIP || (0x3F < curmap->data[ypos*128+(xpos-1)])) --xpos;
+				facing=8;  
 			}
+			if (( k & kb_Right) && (xpos<127)) {
+				if (NOCLIP || (0x3F < curmap->data[ypos*128+(xpos+1)])) ++xpos;
+				facing=4;
+				
+			}
+			if (( k & kb_Up)   && (ypos>0)) {
+				if (NOCLIP || (0x3F < curmap->data[(ypos-1)*128+xpos])) --ypos;
+				facing=12; 
+			}
+			if (( k & kb_Down) && (ypos<127)) { 
+				if (NOCLIP || (0x3F < curmap->data[(ypos+1)*128+xpos])) ++ypos;
+				facing=0;
+			}
+			
+			// Begin collision checking against possible objects and determine
+			// whether or not you want to move in that direction
+			
+			t = curmap->data[ypos*128+xpos];				//Get destination tile
+			moving = ((xpos!=pstats.x)||(ypos!=pstats.y));	//Move only if not walled in
+			onwarp = sobjcollide = enemycollide = 0;		//Reset conditions
+			
 			//Check if sobj collide. If so, check object and see if action needs cancel
 			if (t>=0x80) {
 				sobj = sobj_getentrybypos(xpos,ypos);
@@ -292,44 +305,89 @@ int main(void) {
 					break;
 				}
 			}
-			//On exit of this loop, mobj will be the enemy that you collided with
-			//only if enemycollide was set to 1.
 			
-			
-
-			
-			if (moving) {
-				/*	You'd insert a loop here to see change in xpos/ypos in pstats.x
-					and pstats.y, scrolling pstats.subx and pstats.suby in the process.
-					Updating the sidebar need not occur until after the animation
-					sequence has concluded. */
+			//Enemy movement movestack populate. Only do this if you are moving
+			//due to a keypress, or if keypress was stuffed due to a wait command.
+			if (moving&k) {
+				moveentries = 0;
 				//
-			} else {
-				//Do not try to optimize away. xpos/ypos still needed below.
-				xpos = pstats.x;
-				ypos = pstats.y;
+				//
+				//Populate movement lists.
+				//
+				//
 			}
-			pstats.x = xpos;
-			pstats.y = ypos;
 			
-			x = xpos-7;
-			y = ypos-7;
-			if (x>230) x = 0;
-			else if (x>113) x = 113;
-			if (y>230) y = 0;
-			else if (y>113) y = 113;
-			cx = x*16;
-			cy = y*16;
 			
-			gfx_Tilemap_NoClip(&tilemap,cx,cy);
+			//Get viewport location
+			cx = disp_ClampCoord(pstats.x) * 16;
+			cy = disp_ClampCoord(pstats.y) * 16;
+			//Get player location
+			px = (pstats.x * 16) + 4;
+			py = (pstats.y * 16) + 4;
 			
-			px = xpos*16+4;
-			py = ypos*16+4;
 			gfx_SetClipRegion(4,4,4+224,4+224);
-			gfx_TransparentSprite(player0_tiles[facing+(cycle&3)],px-cx,py-cy);
+			//Smooth movement logic. If player is moving and/or enemies are.
+			if (moving) {
+				gfx_BlitRectangle(gfx_screen,0,LCD_HEIGHT-12,LCD_WIDTH,12);
+				gfx_BlitRectangle(gfx_screen,MINIMAP_X,MINIMAP_Y,66,66);
+				ndx = (xpos - pstats.x) * 4;
+				ndy = (ypos - pstats.y) * 4;
+				dx = ((disp_ClampCoord(xpos) * 16) - cx)/4;
+				dy = ((disp_ClampCoord(ypos) * 16) - cy)/4;
+				tilemap.draw_height = 15;	//Temporarily extend the draw width
+				tilemap.draw_width  = 15;	//and height for side clipping/overdraw
+				for (j=0; j<4; ++j) {
+					gfx_Tilemap(&tilemap,cx+=dx,cy+=dy);
+					t = (k)?(j>>1):0;	//Animate player only if key is being held
+					gfx_TransparentSprite(player0_tiles[facing+t],(px+=ndx)-cx,(py+=ndy)-cy);
+					color = gfx_SetTransparentColor(charequtiles_palette_offset);
+					//Nonmoving enemies
+					for (i=0;i<nummobjs;++i) {
+						mobj = &mobjs[i];
+						if (!(mobj->flags&MSTAT_ISMOVING)) {
+							ex = mobj->x*16 + 4;
+							ey = mobj->y*16 + 4;
+							gfx_TransparentSprite(*(mobj_getmobjdef(mobj)->sprobj+((ecycle&0x08)>>3)),ex-cx,ey-cy);
+						}
+					}
+					//
+					//
+					//Add moving and nonmoving enemies here.
+					//Smooth move logic
+					//
+					//
+					gfx_SetTransparentColor(color);
+					if (j<3) {
+						++ecycle;
+						gfx_SwapDraw();
+					}
+				}
+				tilemap.draw_height = 14;
+				tilemap.draw_width  = 14;
+				//
+				// More move logic for extended animations. To be implemented
+				// and/or unified later.
+				//
+				pstats.x = xpos;
+				pstats.y = ypos;
+			} else {	//Nobody moved. Let's get going with this thing.
+				gfx_Tilemap_NoClip(&tilemap,cx,cy);
+				gfx_TransparentSprite(player0_tiles[facing+(cycle&3)],px-cx,py-cy);
+				color = gfx_SetTransparentColor(charequtiles_palette_offset);
+				for (i=0;i<nummobjs;++i) {
+					mobj = &mobjs[i];
+					ex = mobj->x*16 + 4;
+					ey = mobj->y*16 + 4;
+					gfx_TransparentSprite(*(mobj_getmobjdef(mobj)->sprobj+((ecycle&0x08)>>3)),ex-cx,ey-cy);
+				}
+				gfx_SetTransparentColor(color);
+			}
 			gfx_SetClipRegion(0,0,320,240);
 			
+			
+			
 			//Draw final state of the enemies
+			/*
 			gfx_SetClipRegion(4,4,4+224,4+224);
 			color = gfx_SetTransparentColor(charequtiles_palette_offset);
 			for (i=0;i<nummobjs;++i) {
@@ -340,6 +398,7 @@ int main(void) {
 			}
 			gfx_SetTransparentColor(color);
 			gfx_SetClipRegion(0,0,320,240);
+			*/
 			//Animate static tiles. that which does animate.
 			
 			if (ecycle&0x07 == 0x07) {
@@ -908,7 +967,13 @@ void disp_Menu(char **options,uint8_t ypos,uint8_t curpos,uint8_t maxentries) {
 	gfx_SetTextScale(1,1);
 }
 
-
+uint8_t disp_ClampCoord(uint8_t coord) {
+	uint8_t c;
+	c = coord-7;
+	if (c>230) return 0;
+	if (c>113) return 113;
+	return c;
+}
 
 
 

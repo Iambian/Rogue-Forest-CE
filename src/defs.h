@@ -5,6 +5,8 @@
 
 #define gfx_SetPaletteEntry(offset,color1555) ((uint16_t*)0xE30200)[offset] = color1555;
 
+//Clip through walls by setting NOCLIP to 1
+#define NOCLIP 0
 
 #define SBAR_LEFT	(4+16*14+4)
 #define SBAR_TOP	2

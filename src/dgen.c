@@ -48,11 +48,16 @@ void gen_WarpTo(uint8_t warpdest) {
 	return;
 }
 
-
 /* ============================================================================
 					SIMPLE FOREST DUNGEON GENERATION
 ============================================================================ */
-
+uint8_t rofotreetypemap[] = {
+	0,1,0,1,0,
+	1,2,1,2,1,
+	0,1,3,1,0,
+	1,2,1,2,1,
+	0,1,1,1,0,
+};
 
 /* Randomly places rooms around the map, then makes paths between them */
 void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
@@ -164,7 +169,15 @@ void gen_TestDungeon(uint8_t roomdensity, uint8_t floorid)  {
 	/* Place dungeon interpolation logic below */
 	asm_InterpolateMap();
 	/* Set up tilemap conditions */
-	memcpy(&main_tilemap[0],DL_tree3_tiles,sizeof(gfx_sprite_t*)*DL_tree3_tiles_num);
+	i = rofotreetypemap[floorid-1];
+	switch (i) {
+		case 0:		vptr = DL_tree1_tiles; break; 
+		case 1:		vptr = DL_tree2_tiles; break; 
+		case 2:		vptr = DL_tree3_tiles; break; 
+		case 3:		vptr = DL_tree4_tiles; break; 
+		default:	vptr = DL_tree1_tiles; break;
+	}
+	memcpy(&main_tilemap[0],vptr,sizeof(gfx_sprite_t*)*DL_tree3_tiles_num);
 	memcpy(&main_tilemap[64],DL_floor4_tiles,sizeof(gfx_sprite_t*)*DL_floor4_tiles_num);
 	
 	memcpy(&main_tilemap[FLOORBASE],floorstuff_tiles,sizeof(gfx_sprite_t*)*floorstuff_tiles_num);

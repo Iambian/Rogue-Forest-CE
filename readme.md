@@ -11,24 +11,50 @@ Planned: A top-down roguelike game which takes place in a forest. You are a
 cherry-flavoured dragon, who wants to explore ruins in a magical forest while
 searching for the legendary Cherry of Yendor.
 
-Installing
-----------
+Installing and Running
+----------------------
 Send the following files to the calculator:
-* bin/AAAAMAPS.8xp
-* src/gfx/output/RoFoDAT0.8xv
-* src/gfx/output/RoFoDAT1.8xv
-* src/gfx/output/RoFoDAT2.8xv
-* src/gfx/output/RoFoDAT3.8xv
+* `bin/ROFOREST.8xp`
+* `src/gfx/output/RoFoDAT0.8xv`
+* `src/gfx/output/RoFoDAT1.8xv`
+* `src/gfx/output/RoFoDAT2.8xv`
+* `src/gfx/output/RoFoDAT3.8xv`
 
-Running
--------
-Run `AAAAMAPS.8xp` on your calc as an assembly program, or use your favorite
+Run `ROFOREST.8xp` on your calc as an assembly program, or use your favorite
 shell (such as Cesium) to run it.
+
+Building the Game
+-----------------
+Ooooooh boooooy...
+
+You'll need to have installed, in this order:
+* The latest [CE C toolchain build](https://github.com/CE-Programming/toolchain)
+* The latest version of [convimg](https://github.com/mateoconlechuga/convimg)
+* The patience of a Saint.
+
+You'll need to verify that...
+* ... the version of the CE C toolchain you have is the ZDS-based version,
+  not the LLVM version. I haven't tested it with the LLVM version yet so there's
+  no telling if it'll actually compile there.
+* ... you have downloaded the new convimg program and overwritten the preexisting
+  version in the CE C toolchain's `bin` directory.
+* ... the first time you `make` the file, it fails because of problems with
+  the icon.src file. This is normal since this version of convimg is meant to be
+  used with the LLVM version of the toolchain. **fix this by copying `icon.src` in the root directory to the
+  newly-created `obj` directory**.
+
+To actually build the thing:
+* Open a command line in the project's root diretory.
+* Run `make gfx`. If problems happen here, your convimg program probably isn't the right version.
+* Run `make`. If this is the first time running, it'll fail. See fix above, then try again.
+* You're done. Go send the generated files to your calculator and have fun.
 
 TODO
 ----
-Stats, enemies, battles, warping, overworld map, and adding the cherry.
-
+Making the enemies move and attack. Also make you attack as well.
+Perhaps add in a tab for overworld map tiles seen so you don't get totally lost.
+Oh. Also. Link in the title screen to the actual game. Probably a dummied out
+class select?
 
 Credits
 -------

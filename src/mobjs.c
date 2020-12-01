@@ -250,6 +250,7 @@ void mobj_basicmove(mobj_t *mobj) {
 	ny = mobj->y;
 	dx = pstats.x-nx;
 	dy = pstats.y-ny;
+	mobj->flags &= ~MSTAT_ISMOVING;
 	if ((abs(dx) < 10) && (abs(dy) < 10)) {
 		dx = ((dx>0)?1:-1);
 		dy = ((dy>0)?1:-1);
@@ -257,6 +258,7 @@ void mobj_basicmove(mobj_t *mobj) {
 		if (mobj_trymove(mobj,0,dy)) ny = ny+dy;
 		if ((nx != mobj->x) && (ny != mobj->y)) {
 			mobj_pushmove(mobj,nx,ny);
+			mobj->flags |= MSTAT_ISMOVING;
 		}
 	}
 }
