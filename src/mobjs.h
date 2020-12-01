@@ -64,11 +64,22 @@ typedef struct mobjdef_st {
 #define S_ANGEL		&(characters_tiles_data[76])
 #define S_KING		&(characters_tiles_data[78])
 
+#define MSTAT_SPOTTED	(1<<0)
+#define MSTAT_RESERVED1 (1<<1)
+#define MSTAT_RESERVED2 (1<<2)
+#define MSTAT_RESERVED3 (1<<3)
+#define MSTAT_RESERVED4 (1<<4)
+#define MSTAT_RESERVED5 (1<<5)
+#define MSTAT_RESERVED6 (1<<6)
+#define MSTAT_RESERVED7 (1<<7)
+
 
 extern mobjdef_t emptyplayer,playerbase,playercalc,enemycalc;
 extern mobjdef_t playerdef,enemydef[];
 extern mobj_t scratchmobj;
 extern mobj_t playermobj;
+extern uint8_t tilepassable[];
+
 
 void mobj_newchar(void);
 void mobj_clear(void);
@@ -78,6 +89,9 @@ mobj_t *mobj_getentrybypos(uint8_t x, uint8_t y);
 mobjdef_t *mobj_getmobjdef(mobj_t *mobj);
 void mobj_recalcplayer(void);
 
+void mobj_pushmove(mobj_t* mobj, uint8_t newx, uint8_t newy);
+uint8_t mobj_trymove(mobj_t *mobj, int8_t dx, int8_t dy);
+void mobj_basicmove(mobj_t *mobj);
 
 
 

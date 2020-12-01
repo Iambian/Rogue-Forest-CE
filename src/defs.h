@@ -1,6 +1,7 @@
 #ifndef __DEFS__INCGUARD__
 #define __DEFS__INCGUARD__
 
+#define VERSION "v0.1"
 
 #define gfx_SetPaletteEntry(offset,color1555) ((uint16_t*)0xE30200)[offset] = color1555;
 

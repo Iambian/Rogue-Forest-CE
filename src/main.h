@@ -61,6 +61,14 @@ typedef struct floordat_st {
 	
 } floordat_t;
 
+typedef struct moving_st {
+	mobj_t *mobj;	//If player, will be null. Probably won't be moving player this way
+	int	startx;
+	int starty;
+	int endx;
+	int endy;
+} moving_t;
+
 /* --------------------------- variable declarations -----------------------*/
 extern sobj_t empty_sobj;
 extern mobj_t empty_mobj;
@@ -83,6 +91,8 @@ extern uint8_t	numsobjs;
 extern sobj_t	sobjs[];
 extern uint8_t	nummobjs;
 extern mobj_t	mobjs[];
+extern moving_t movestack[];
+extern uint8_t  moveentries;
 
 extern item_t inventory[];
 extern item_t equipment[];

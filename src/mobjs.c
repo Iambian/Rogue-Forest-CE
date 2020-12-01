@@ -35,15 +35,35 @@ mobjdef_t playerdef = {
 mobjdef_t enemydef[] = {
 //	name field ,spriteobj ,scriptname 
 //	mhp,mmp,str,spd,smr,atk,def,blk,ref,snk,per,rwr,mdf,mat,fdf,fat,edf,eat,pdf,pat
-	{"Rat"     ,S_NORMRAT ,NULL,
+	{"Rat"     ,S_NORMRAT ,mobj_basicmove,
 	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
-	{"Dire Rat",S_DIRERAT ,NULL,
+	{"Dire Rat",S_DIRERAT ,mobj_basicmove,
 	 20,  0,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
-	{"Squirrel",S_SQUIRREL,NULL,
+	{"Squirrel",S_SQUIRREL,mobj_basicmove,
 	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
-	{"Snake",S_SNAKE,NULL,
+	{"Snake",S_SNAKE,mobj_basicmove,
 	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
 	
+};
+
+uint8_t tilepassable[] = {
+//	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F	
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//00
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//10
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//20
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//30
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//40
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//50
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//60
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//70
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//80 traps and open doors
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//90
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//A0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//B0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//C0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//D0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//E0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//F0
 };
 
 void mobj_newchar(void) {
@@ -201,8 +221,45 @@ void mobj_recalcplayer(void) {
 	}
 }
 
+void mobj_pushmove(mobj_t* mobj, uint8_t newx, uint8_t newy) {
+	int x,y;
+	moving_t *m;
+	
+	m = &movestack[moveentries];
+	m->mobj = mobj;
+	m->startx = mobj->x*16;
+	m->starty = mobj->y*16;
+	m->endx = newx*16;
+	m->endy = newy*16;
+}
 
-
+uint8_t mobj_trymove(mobj_t *mobj, int8_t dx, int8_t dy) {
+	uint8_t cx,cy,t;
+	cx = mobj->x + dx;
+	cy = mobj->y + dy;
+	t = curmap->data[cy*128+cx];
+	return tilepassable[t];
+}
+//Only move if player is within 10 squares of enemy
+#define abs(x) ((x<0)?(-x):x)
+void mobj_basicmove(mobj_t *mobj) {
+	int8_t dx,dy;
+	uint8_t nx,ny;
+	
+	nx = mobj->x;
+	ny = mobj->y;
+	dx = pstats.x-nx;
+	dy = pstats.y-ny;
+	if ((abs(dx) < 10) && (abs(dy) < 10)) {
+		dx = ((dx>0)?1:-1);
+		dy = ((dy>0)?1:-1);
+		if (mobj_trymove(mobj,dx,0)) nx = nx+dx;
+		if (mobj_trymove(mobj,0,dy)) ny = ny+dy;
+		if ((nx != mobj->x) && (ny != mobj->y)) {
+			mobj_pushmove(mobj,nx,ny);
+		}
+	}
+}
 
 
 

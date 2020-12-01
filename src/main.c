@@ -45,6 +45,8 @@ uint8_t	numsobjs;
 sobj_t	sobjs[255];
 uint8_t	nummobjs;
 mobj_t	mobjs[255];
+moving_t movestack[255];
+uint8_t  moveentries;
 
 sobj_t empty_sobj;
 mobj_t empty_mobj;
@@ -110,6 +112,9 @@ uint8_t forestmap_test[] = {
 uint8_t forestdungeon_test[] = {
 	0x01,0x02,0x03,0x04,0x05,0x0D
 };
+char *title_head = "Rogue Forest";
+char *title_options[] = {"New Game","Load Game","Credits","Quit"};
+char *title_credits = "Credits";
 
 /* Function prototypes goes here */
 void disp_ShowSidebar(void);
@@ -119,6 +124,10 @@ void game_Initialize(void);
 void disp_PrintDungeonID(void);		//Displays forestarea if in forest.
 void disp_PrintDungeonFloor(void);	//If in forest, does not display anything
 void disp_Notice(char *s);
+int  disp_SetCenter(char *s);
+uint8_t disp_ShowTitleScreen(void);
+void disp_ShowCredits(void);
+void disp_Menu(char **options,uint8_t ypos,uint8_t curpos,uint8_t maxentries);
 
 int main(void) {
 	int sec,subsec;
@@ -131,6 +140,8 @@ int main(void) {
 	sobj_t *sobj;
 	uint8_t sobj_maintype;
 	uint8_t onwarp;
+	uint8_t state;
+	uint8_t curoption;
 	
 	
 	game_Initialize();
@@ -146,222 +157,246 @@ int main(void) {
 	ecycle = facing = 0;
 	sobj = NULL; //So the compiler doesn't complain
 	mobj = NULL; //Also so the compiler doesn't complain
-	
+	state = 0;
+	curoption = 0;
 	while (1) {
 		kb_Scan();
 		k = kb_Data[7];
 		kc = kb_Data[1];
-		if (kc & kb_Mode) break;
-		++ecycle;
-		
-		if (kc & kb_Yequ)			disp_ShowInventory(0);
-		else if (kc & kb_Window)	disp_ShowInventory(1);
-		else if (kc & kb_Zoom)		disp_ShowInventory(3);
-		else if (kc & kb_Trace)		disp_ShowInventory(4);
-		else if (kc & kb_Graph)		disp_ShowInventory(5);
-
-		//if (!k) continue;
-		
-		xpos = pstats.x;
-		ypos = pstats.y;
-		
-		cycle = 0;
-		if (( k & kb_Left) && (xpos>0)) 	{ --xpos; facing=8;  }
-		if (( k & kb_Right) && (xpos<127))	{ ++xpos; facing=4;  }
-		if (( k & kb_Up)   && (ypos>0)) 	{ --ypos; facing=12; }
-		if (( k & kb_Down) && (ypos<127))  	{ ++ypos; facing=0;  }
-		
-		/*	Check for collision. If a collision has occurred, check what you ran
-			into to perform an action (or no action if one cannot occur. e.g. wall)
-		*/
-		t = curmap->data[ypos*128+xpos];
-		//dbg_sprintf(dbgout,"Current tile: %X\n",t);
-		moving = 1;		//Set to zero if movement is canceled.
-		onwarp = sobjcollide = enemycollide = 0;
-		//Check if wall collide. If so, cancel movement.
-		if (t<0x40) {
-			//moving = 0;
-		}
-		//Check if sobj collide. If so, check object and see if action needs cancel
-		if (t>=0x80) {
-			sobj = sobj_getentrybypos(xpos,ypos);
-			if (!sobj) {
-				//We hit on something that's not in the sobj table. wat.
-				moving = 0;
+		//title screen
+		if (!state) {	//Title screen
+			i = disp_ShowTitleScreen();
+			if (i==0) {
+				//newgame
+			} else if (i==1) {
+				//loadgame
+			} else if (i==2) {
+				state = 1;
+				//credits
 			} else {
-				sobj_maintype = sobj->type & SOBJTMSKHI;
-				if (sobj_maintype == SOBJ_DOORBASE) {
-					if (sobj->type & 0x80) {
-						moving = 1;  //Door was already opened. Don't impede path.
-					} else {
-						if (sobj->type == SOBJ_DOOR) {
-							sobj->type |= 0x80;	//Open the door.
-							moving = 1;
-						} else {
-							//Door was locked or cannot be opened at this time.
-							//Test later on for other door types, such as if
-							//you have keys that can open this door.
-							moving = 0;
-						}
-					}
-					
-				} else if (sobj_maintype == SOBJ_WARPBASE) {
-					onwarp = 1;
-					//If push alpha while on top of activated warp tile
-					if ((kb_Data[2] & kb_Alpha) && (sobj->type & 0x80)) {
-						gfx_FillScreen(COLOR_BLACK);
-						gfx_SwapDraw();
-						if (sobj->data == 0xFF) {
-							//
-							// Roll game ending
-							//
-						} else {
-							gen_WarpTo(sobj->data);
-							gfx_FillScreen(COLOR_BLACK);
-							gfx_SwapDraw();
-							gfx_FillScreen(COLOR_BLACK);
-							gfx_SwapDraw();
-							while (kb_AnyKey()); //wait until key release
-							pstats.update = UPD_SIDEBAR;
-							continue;	//Restart the loop
-						}
-					}
-				} else if (sobj_maintype == SOBJ_ITEMBASE) {
-					if ((kb_Data[2] & kb_Alpha) && (sobj->type == SOBJ_CHERRY)) {
-						sobj_rementry(sobj_getindex(sobj));
-						pstats.hascherry = 1;
-						curmap->data[ypos*128+xpos] = 0x48;	//grass tile.
-						sobj = NULL;
-						disp_Notice("You ate the Cherry of Yendor.\nIt was delicious.");
-						
-						//
-						//
-						//FOR NOW, JUST ROLL THE END CREDITS AND CALL IT A DAY.
-						//
-						//
-						
-					}
-				} else {
-					
-					//Unhandled type. fill in later for other object types.
-					//For now though, cancel movement.
-					moving = 0;
-				}
-				sobj_WriteToMap();	//In case things changed. This is cheap anyway.
-			}
-		} else sobj = NULL;
-		
-		//Check if enemy collide. If so, cancel movement.
-		for (i=0;i<nummobjs;++i) {
-			mobj = &mobjs[i];
-			if ((xpos == mobj->x) && (ypos == mobj->y)) {
-				enemycollide = 1;
-				moving = 0;
+				//quit
 				break;
 			}
-		}
-		//On exit of this loop, mobj will be the enemy that you collided with
-		//only if enemycollide was set to 1.
-		
-		
+			continue;
+		} else if (state == 1) {	//Credits
+			disp_ShowCredits();
+			state = 0;
+			continue;
+		} else if (state == 3) {	//Main game mode
+			if (kc & kb_Mode) break;
+			++ecycle;
+			
+			if (kc & kb_Yequ)			disp_ShowInventory(0);
+			else if (kc & kb_Window)	disp_ShowInventory(1);
+			else if (kc & kb_Zoom)		disp_ShowInventory(3);
+			else if (kc & kb_Trace)		disp_ShowInventory(4);
+			else if (kc & kb_Graph)		disp_ShowInventory(5);
 
-		
-		if (moving) {
-			/*	You'd insert a loop here to see change in xpos/ypos in pstats.x
-				and pstats.y, scrolling pstats.subx and pstats.suby in the process.
-				Updating the sidebar need not occur until after the animation
-				sequence has concluded. */
-			//
-		} else {
-			//Do not try to optimize away. xpos/ypos still needed below.
+			//if (!k) continue;
+			
 			xpos = pstats.x;
 			ypos = pstats.y;
-		}
-		pstats.x = xpos;
-		pstats.y = ypos;
-		
-		x = xpos-7;
-		y = ypos-7;
-		if (x>230) x = 0;
-		else if (x>113) x = 113;
-		if (y>230) y = 0;
-		else if (y>113) y = 113;
-		cx = x*16;
-		cy = y*16;
-		
-		gfx_Tilemap_NoClip(&tilemap,cx,cy);
-		
-		px = xpos*16+4;
-		py = ypos*16+4;
-		gfx_SetClipRegion(4,4,4+224,4+224);
-		gfx_TransparentSprite(player0_tiles[facing+(cycle&3)],px-cx,py-cy);
-		gfx_SetClipRegion(0,0,320,240);
-		
-		//Draw final state of the enemies
-		gfx_SetClipRegion(4,4,4+224,4+224);
-		color = gfx_SetTransparentColor(charequtiles_palette_offset);
-		for (i=0;i<nummobjs;++i) {
-			mobj = &mobjs[i];
-			ex = mobj->x*16 + 4;
-			ey = mobj->y*16 + 4;
-			gfx_TransparentSprite(*(mobj_getmobjdef(mobj)->sprobj+((ecycle&0x08)>>3)),ex-cx,ey-cy);
-		}
-		gfx_SetTransparentColor(color);
-		gfx_SetClipRegion(0,0,320,240);
-		//Animate static tiles. that which does animate.
-		
-		if (ecycle&0x07 == 0x07) {
-			++pstats.timer;
-			sobj_WriteToMap();
-		}
-		
-		disp_ShowSidebar();
-		asm_LoadMinimap(xpos,ypos);
-		
-		gfx_SetColor(COLOR_BLACK);
-		gfx_SetTextFGColor(COLOR_WHITE);
-		gfx_SetTextXY(4,LCD_HEIGHT-10);
-		gfx_FillRectangle(4,LCD_HEIGHT-10,LCD_WIDTH-4,8);
-		if (onwarp) {
-			if (sobj->type&0x80) {
-				gfx_PrintString("Press [ALPHA] to warp to ");
-			} else {
-				gfx_PrintString("Inactive warp gate to ");
+			
+			cycle = 0;
+			if (( k & kb_Left) && (xpos>0)) 	{ --xpos; facing=8;  }
+			if (( k & kb_Right) && (xpos<127))	{ ++xpos; facing=4;  }
+			if (( k & kb_Up)   && (ypos>0)) 	{ --ypos; facing=12; }
+			if (( k & kb_Down) && (ypos<127))  	{ ++ypos; facing=0;  }
+			
+			/*	Check for collision. If a collision has occurred, check what you ran
+				into to perform an action (or no action if one cannot occur. e.g. wall)
+			*/
+			t = curmap->data[ypos*128+xpos];
+			//dbg_sprintf(dbgout,"Current tile: %X\n",t);
+			moving = 1;		//Set to zero if movement is canceled.
+			onwarp = sobjcollide = enemycollide = 0;
+			//Check if wall collide. If so, cancel movement.
+			if (t<0x40) {
+				//moving = 0;
 			}
-			i = sobj->data;
-			if ((i&AREAHIMASK) == AREA_FOREST) {
-				gfx_PrintString("forest ");
-				gfx_PrintChar((i-1)%5+'A');
-				gfx_PrintChar((i-1)/5+'1');
-			} else if (i==0xFF) {
-				gfx_PrintString("forest exit");
-			} else {
-				gfx_PrintString("dungeon ");
-				gfx_PrintUInt(AREAHIUNCONV(i),1);
+			//Check if sobj collide. If so, check object and see if action needs cancel
+			if (t>=0x80) {
+				sobj = sobj_getentrybypos(xpos,ypos);
+				if (!sobj) {
+					//We hit on something that's not in the sobj table. wat.
+					moving = 0;
+				} else {
+					sobj_maintype = sobj->type & SOBJTMSKHI;
+					if (sobj_maintype == SOBJ_DOORBASE) {
+						if (sobj->type & 0x80) {
+							moving = 1;  //Door was already opened. Don't impede path.
+						} else {
+							if (sobj->type == SOBJ_DOOR) {
+								sobj->type |= 0x80;	//Open the door.
+								moving = 1;
+							} else {
+								//Door was locked or cannot be opened at this time.
+								//Test later on for other door types, such as if
+								//you have keys that can open this door.
+								moving = 0;
+							}
+						}
+						
+					} else if (sobj_maintype == SOBJ_WARPBASE) {
+						onwarp = 1;
+						//If push alpha while on top of activated warp tile
+						if ((kb_Data[2] & kb_Alpha) && (sobj->type & 0x80)) {
+							gfx_FillScreen(COLOR_BLACK);
+							gfx_SwapDraw();
+							if (sobj->data == 0xFF) {
+								//
+								// Roll game ending
+								//
+							} else {
+								gen_WarpTo(sobj->data);
+								gfx_FillScreen(COLOR_BLACK);
+								gfx_SwapDraw();
+								gfx_FillScreen(COLOR_BLACK);
+								gfx_SwapDraw();
+								while (kb_AnyKey()); //wait until key release
+								pstats.update = UPD_SIDEBAR;
+								continue;	//Restart the loop
+							}
+						}
+					} else if (sobj_maintype == SOBJ_ITEMBASE) {
+						if ((kb_Data[2] & kb_Alpha) && (sobj->type == SOBJ_CHERRY)) {
+							sobj_rementry(sobj_getindex(sobj));
+							pstats.hascherry = 1;
+							curmap->data[ypos*128+xpos] = 0x48;	//grass tile.
+							sobj = NULL;
+							disp_Notice("You ate the Cherry of Yendor.\nIt was delicious.");
+							
+							//
+							//
+							//FOR NOW, JUST ROLL THE END CREDITS AND CALL IT A DAY.
+							//
+							//
+							
+						}
+					} else {
+						
+						//Unhandled type. fill in later for other object types.
+						//For now though, cancel movement.
+						moving = 0;
+					}
+					sobj_WriteToMap();	//In case things changed. This is cheap anyway.
+				}
+			} else sobj = NULL;
+			
+			//Check if enemy collide. If so, cancel movement.
+			for (i=0;i<nummobjs;++i) {
+				mobj = &mobjs[i];
+				if ((xpos == mobj->x) && (ypos == mobj->y)) {
+					enemycollide = 1;
+					moving = 0;
+					break;
+				}
 			}
-		} else if (sobj && (sobj->type == SOBJ_CHERRY)) {
-			gfx_PrintString("[ALPHA] to eat Legendary Cherry of Yendor");
-		} else if (0) {
-			//
-			//Mayhaps put something else here in bottom bar if other
-			//conditions match?
-			//
-		} else {
-			/* Testing */
-			gfx_PrintUInt(xpos,3);
-			gfx_PrintString(", ");
-			gfx_PrintUInt(ypos,3);
-			gfx_PrintString(" -- dbg --");
-			gfx_PrintUInt(numsobjs,1);
+			//On exit of this loop, mobj will be the enemy that you collided with
+			//only if enemycollide was set to 1.
+			
+			
+
+			
+			if (moving) {
+				/*	You'd insert a loop here to see change in xpos/ypos in pstats.x
+					and pstats.y, scrolling pstats.subx and pstats.suby in the process.
+					Updating the sidebar need not occur until after the animation
+					sequence has concluded. */
+				//
+			} else {
+				//Do not try to optimize away. xpos/ypos still needed below.
+				xpos = pstats.x;
+				ypos = pstats.y;
+			}
+			pstats.x = xpos;
+			pstats.y = ypos;
+			
+			x = xpos-7;
+			y = ypos-7;
+			if (x>230) x = 0;
+			else if (x>113) x = 113;
+			if (y>230) y = 0;
+			else if (y>113) y = 113;
+			cx = x*16;
+			cy = y*16;
+			
+			gfx_Tilemap_NoClip(&tilemap,cx,cy);
+			
+			px = xpos*16+4;
+			py = ypos*16+4;
+			gfx_SetClipRegion(4,4,4+224,4+224);
+			gfx_TransparentSprite(player0_tiles[facing+(cycle&3)],px-cx,py-cy);
+			gfx_SetClipRegion(0,0,320,240);
+			
+			//Draw final state of the enemies
+			gfx_SetClipRegion(4,4,4+224,4+224);
+			color = gfx_SetTransparentColor(charequtiles_palette_offset);
+			for (i=0;i<nummobjs;++i) {
+				mobj = &mobjs[i];
+				ex = mobj->x*16 + 4;
+				ey = mobj->y*16 + 4;
+				gfx_TransparentSprite(*(mobj_getmobjdef(mobj)->sprobj+((ecycle&0x08)>>3)),ex-cx,ey-cy);
+			}
+			gfx_SetTransparentColor(color);
+			gfx_SetClipRegion(0,0,320,240);
+			//Animate static tiles. that which does animate.
+			
+			if (ecycle&0x07 == 0x07) {
+				++pstats.timer;
+				sobj_WriteToMap();
+			}
+			
+			disp_ShowSidebar();
+			asm_LoadMinimap(xpos,ypos);
+			
+			gfx_SetColor(COLOR_BLACK);
+			gfx_SetTextFGColor(COLOR_WHITE);
+			gfx_SetTextXY(4,LCD_HEIGHT-10);
+			gfx_FillRectangle(4,LCD_HEIGHT-10,LCD_WIDTH-4,8);
+			if (onwarp) {
+				if (sobj->type&0x80) {
+					gfx_PrintString("Press [ALPHA] to warp to ");
+				} else {
+					gfx_PrintString("Inactive warp gate to ");
+				}
+				i = sobj->data;
+				if ((i&AREAHIMASK) == AREA_FOREST) {
+					gfx_PrintString("forest ");
+					gfx_PrintChar((i-1)%5+'A');
+					gfx_PrintChar((i-1)/5+'1');
+				} else if (i==0xFF) {
+					gfx_PrintString("forest exit");
+				} else {
+					gfx_PrintString("dungeon ");
+					gfx_PrintUInt(AREAHIUNCONV(i),1);
+				}
+			} else if (sobj && (sobj->type == SOBJ_CHERRY)) {
+				gfx_PrintString("[ALPHA] to eat Legendary Cherry of Yendor");
+			} else if (0) {
+				//
+				//Mayhaps put something else here in bottom bar if other
+				//conditions match?
+				//
+			} else {
+				/* Testing */
+				gfx_PrintUInt(xpos,3);
+				gfx_PrintString(", ");
+				gfx_PrintUInt(ypos,3);
+				gfx_PrintString(" -- dbg --");
+				gfx_PrintUInt(numsobjs,1);
+			}
 		}
 		gfx_SwapDraw();
 	}
-	
 	gfx_End();
-    return 0;
+	return 0;
 }
 
-
+/* ========================================================================= */
+/* ========================================================================= */
+/* ========================================================================= */
+/* ========================================================================= */
 
 #define sidebar_center(strwidth) ((((LCD_WIDTH-SBAR_LEFT)-strwidth)/2)+SBAR_LEFT)
 void disp_ShowSidebar(void) {
@@ -474,6 +509,7 @@ void disp_ShowSidebar(void) {
 	
 	pstats.updateprev = pstats.update;
 	pstats.update = 0;
+	
 	return;
 }
 
@@ -765,6 +801,77 @@ void disp_ShowInventory(uint8_t state) {
 	return;
 }
 
+uint8_t disp_ShowTitleScreen(void) {
+	uint8_t k,kc,val,i;
+	int8_t curpos,maxopt;
+	val = curpos = 0;
+	maxopt = sizeof(title_options)/sizeof(char*);
+	k = kb_Left;	//pump the screen
+	kc = 0;
+	while (1) {
+		if (k|kc) {
+			if (k&kb_Down)	curpos = (curpos+1)%maxopt;
+			if (k&kb_Up)	curpos = (curpos-1)%maxopt;
+			if (curpos<0)	curpos += maxopt;
+			gfx_FillScreen(COLOR_FORESTGREEN);
+			gfx_SetTextFGColor(COLOR_GOLD);
+			gfx_SetTextScale(3,3);
+			gfx_PrintStringXY(title_head,disp_SetCenter(title_head),10);
+			disp_Menu(title_options,100,curpos,maxopt);
+			gfx_PrintStringXY(VERSION,LCD_WIDTH-gfx_GetStringWidth(VERSION),LCD_HEIGHT-10);
+			gfx_SwapDraw();
+			while (kb_AnyKey());	//wait until key release
+			if (kc&kb_Mode)	return maxopt-1;
+			if (kc&kb_2nd)	break;
+		}
+		kb_Scan();
+		k = kb_Data[7];
+		kc= kb_Data[1];
+	}
+	return curpos;
+}
+
+//Not prototyped. Only used in disp_ShowCredits()
+void disp_ShowCreditEntry(void **sprite, char *s,uint8_t timer) {
+	uint8_t y,color;
+	int x;
+	y = gfx_GetTextY();
+	x = 16;
+	gfx_SetTextXY(x+20,y+4);
+	color = gfx_SetTransparentColor(charequtiles_palette_offset);
+	gfx_TransparentSprite_NoClip(*(sprite+((timer>>4)&1)),x,y);
+	gfx_SetTextScale(1,1);
+	gfx_SetTextFGColor(COLOR_LIGHTGRAY);
+	gfx_PrintString(s);
+	gfx_SetTextXY(x,y+24);
+}
+
+void disp_ShowCredits(void) {
+	uint8_t timer;
+	timer = 0;
+	while (kb_AnyKey());	//wait for the key release
+	while (!kb_AnyKey()) {	//draw while waiting for a keypress
+		gfx_FillScreen(COLOR_FORESTGREEN);
+		gfx_SetTextFGColor(COLOR_GOLD);
+		gfx_SetTextScale(3,3);
+		gfx_PrintStringXY(title_credits,disp_SetCenter(title_credits),10);
+		gfx_SetTextXY(0,70);
+		disp_ShowCreditEntry(S_LIZMAN,"Iambian -- CFD/Game programmer",timer);
+		disp_ShowCreditEntry(S_LIGHTS,"Geekboy1011 -- Manager and Sane One",timer);
+		disp_ShowCreditEntry(S_ANGEL,"Jacobly -- CE Toolchain",timer);
+		disp_ShowCreditEntry(S_REAPER,"MateoConLechuga -- Toolchain/ConvImg",timer);
+		disp_ShowCreditEntry(S_HIDDEN,"DragonDePlatino -- DawnLike tileset",timer);
+		
+		gfx_SwapDraw();
+		++timer;
+	}
+	while (kb_AnyKey());	//wait for the key release
+}
+
+
+
+
+
 void disp_PrintDungeonID(void) {
 	if (pstats.dungeonid) {
 		gfx_PrintUInt(pstats.dungeonid,1);
@@ -777,6 +884,29 @@ void disp_PrintDungeonFloor(void) {
 	if (pstats.dungeonid) gfx_PrintUInt(pstats.dungeonfloor,2);
 }
 
+int disp_SetCenter(char *s) {
+	int x,y;
+	x = (LCD_WIDTH-gfx_GetStringWidth(s))/2;
+	y = gfx_GetTextY();
+	gfx_SetTextXY(x,y);
+	return x;
+}
+
+void disp_Menu(char **options,uint8_t ypos,uint8_t curpos,uint8_t maxentries) {
+	uint8_t i;
+	char *s;
+	gfx_SetTextScale(2,2);
+	for (i=0; i<maxentries; ypos+=24,++i) {
+		gfx_SetTextFGColor(COLOR_GUNMETALGRAY);
+		if (i==curpos)	gfx_SetTextFGColor(COLOR_GOLD);
+		s = options[i];
+		gfx_SetTextXY(0,ypos);	//setting x will be done in disp_SetCenter
+		disp_SetCenter(s);
+		gfx_PrintString(s);
+	}
+	gfx_SetTextFGColor(COLOR_BLACK);
+	gfx_SetTextScale(1,1);
+}
 
 
 
@@ -892,6 +1022,7 @@ void game_Initialize(void) {
 	
 	gfx_SetPalette(charequtiles_pal,sizeof_charequtiles_pal,charequtiles_palette_offset);
 	gfx_SetPaletteEntry(charequtiles_palette_offset,gfx_RGBTo1555(128,160,160)); //gunmetal gray
+	
 	
 	tilemap.map = (((uint8_t*)curmap)+2);
     tilemap.type_width  = gfx_tile_16_pixel;
