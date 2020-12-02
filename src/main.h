@@ -101,6 +101,7 @@ extern item_t secondary;
 extern uint8_t forestmap[25];
 extern uint8_t forestdungeon[6];
 extern uint8_t forestmap_start;
+extern uint8_t forestmap_seen[25];
 
 //For debugging purposes
 extern uint8_t forestmap_test_start;

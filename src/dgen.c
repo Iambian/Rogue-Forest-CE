@@ -37,6 +37,7 @@ void gen_WarpTo(uint8_t warpdest) {
 	if (!dungeonid) {
 		//Forest.
 		gen_TestDungeon(40,floorid); //Uses previous value of forestarea
+		forestmap_seen[floorid-1] = 1;
 		pstats.forestarea = floorid;
 		pstats.dungeonid = 0;
 		pstats.dungeonfloor = 0;

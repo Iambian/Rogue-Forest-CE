@@ -110,12 +110,15 @@ uint8_t forestmap_test[] = {
 	FEX_WEST
 };
 
+uint8_t forestmap_seen[25];
+
 uint8_t forestdungeon_test[] = {
 	0x01,0x02,0x03,0x04,0x05,0x0D
 };
 char *title_head = "Rogue Forest";
 char *title_options[] = {"New Game","Load Game","Credits","Quit"};
 char *title_credits = "Credits";
+char *string_forestmap = "Forest Map";
 
 /* Function prototypes goes here */
 void disp_ShowSidebar(void);
@@ -433,12 +436,7 @@ int main(void) {
 				//conditions match?
 				//
 			} else {
-				/* Testing */
-				gfx_PrintUInt(xpos,3);
-				gfx_PrintString(", ");
-				gfx_PrintUInt(ypos,3);
-				gfx_PrintString(" -- dbg --");
-				gfx_PrintUInt(numsobjs,1);
+				gfx_PrintString("| Inventory |  Stats  |    Map    |");
 			}
 		}
 		gfx_SwapDraw();
@@ -663,27 +661,54 @@ void disp_stats(char *s, uint8_t base, int plus) {
 	}
 	gfx_SetTextXY(6,gfx_GetTextY() + 10);
 }
+
 #define disp_diff(member) playerbase.##member##,(playercalc.##member##-playerbase.##member##)
+void disp_statsummary(void) {
+	disp_stats("STR: ",disp_diff(str));
+	disp_stats("AGI: ",disp_diff(spd));
+	disp_stats("INT: ",disp_diff(smrt));
+	gfx_SetTextXY(6,gfx_GetTextY() + 4);
+	disp_stats("ATK: ",disp_diff(atk));
+	disp_stats("SNK: ",disp_diff(snk));
+	disp_stats("RWR: ",disp_diff(rawrs));
+	disp_stats("DEF: ",disp_diff(def));
+	disp_stats("BLK: ",disp_diff(blk));
+	disp_stats("REF: ",disp_diff(refl));
+	gfx_SetTextXY(6,gfx_GetTextY() + 4);
+	disp_stats("MATK: ",disp_diff(matk));
+	disp_stats("FATK: ",disp_diff(fatk));
+	disp_stats("EATK: ",disp_diff(eatk));
+	disp_stats("PATK: ",disp_diff(patk));
+	gfx_SetTextXY(6,gfx_GetTextY() + 4);
+	disp_stats("MDEF: ",disp_diff(mdef));
+	disp_stats("FDEF: ",disp_diff(fdef));
+	disp_stats("EDEF: ",disp_diff(edef));
+	disp_stats("PDEF: ",disp_diff(pdef));				
+	gfx_SetTextXY(6,gfx_GetTextY() + 4);
+	disp_stats("S Pts: ",pstats.statpoints,0);
+	disp_stats("T Pts: ",pstats.talentpoints,0);
+}
+
+
 void disp_ShowInventory(uint8_t state) {
-	uint8_t cursor,prevcursor,update,cursormode;
+	uint8_t cursor,prevcursor,update,cursormode,invtimer;
 	kb_key_t sk,k,pk,nk;
-	uint8_t temp,gx,gy,i,t;
+	uint8_t temp,gx,gy,i,j,t,c,a,b;
 	int x,y;
 	void *ptr;
 	
 	mobj_recalcplayer();	//MOVE THIS TO START, CLOSE, AND ON GEARCHANGE
 	gfx_BlitScreen(gfx_buffer);
-	cursor = prevcursor = pk = k = cursormode = 0;
-	update = 1;
+	invtimer = cursor = prevcursor = pk = k = cursormode = 0;
 	while (1) {
 		kb_Scan();
 		k = kb_Data[1];
 		switch (k) {
-			case kb_Yequ:	state = 0; update = 1; break;
-			case kb_Window:	state = 1; update = 1; break;
-			case kb_Zoom:	state = 2; update = 1; break;
-			case kb_Trace:	state = 3; update = 1; break;
-			case kb_Graph:	state = 4; update = 1; break;
+			case kb_Yequ:	state = 0; break;
+			case kb_Window:	state = 1; break;
+			case kb_Zoom:	state = 2; break;
+			case kb_Trace:	state = 3; break;
+			case kb_Graph:	state = 4; break;
 			default: break;
 		}
 		k = (kb_Data[1] & 0xE0) | kb_Data[7];	//Combine dpad and del/mode/2nd
@@ -692,43 +717,43 @@ void disp_ShowInventory(uint8_t state) {
 		nk = asm_GetNumpad();
 		
 		//Activate only if pressed numpad in inventory while not already moving stuff
-		if (nk && !state && !cursormode) {
-			t = disp_GetCursorAddress(cursor)->type;
-			if ((0xFF == items_GetItemType(t)) || !t) {
-				//dbg_sprintf(dbgout,"Keyorg: %i\n",nk);
-				disp_SwapInvSlots((nk-1)|0xC0,cursor);
-				pstats.update |= UPD_SIDEBAR;
-				update = 1;
-			}
-		}
-		
-		
 		if (sk&kb_Mode) {
 			if (cursormode) {
 				cursor = prevcursor;
 				prevcursor = cursormode = 0;
 			} else break;
 		}
-		if (sk&kb_Del) {
-			if (!state) {
-				//Inventory management
-				if (cursor&0x80) {
-					//If equipment, try to move gear to inventory
-					for (i=0; i<34; ++i) if (!inventory[i].type) break;
-					if (i<34) {
-						t = cursor & 0x7F;
-						//An empty slot was found. Shove gear into it.
-						inventory[i] = equipment[t];
-						equipment[t].type = 0;
-						equipment[t].data = 0;
-						pstats.update |= UPD_SIDEBAR;
-					}
+		
+		/* Backer */
+		gfx_SetColor(COLOR_GUNMETALGRAY);
+		gfx_FillRectangle_NoClip(4,4,224,224);
+		gfx_SetTextFGColor(COLOR_WHITE);
+		gfx_SetTextXY(6,10);
+		if (!state) {
+			/* ======================= Keyboarding ====================== */
+			if (nk && !cursormode) {
+				t = disp_GetCursorAddress(cursor)->type;
+				if ((0xFF == items_GetItemType(t)) || !t) {
+					disp_SwapInvSlots((nk-1)|0xC0,cursor);
+					pstats.update |= UPD_SIDEBAR;
 				}
 			}
-		}
-		
-		if (sk&kb_2nd) {
-			if (!state) {
+			if ((sk&kb_Del) && (cursor&0x80)) {
+				//Inventory management. Clear gear to inventory
+				//If equipment, try to move gear to inventory
+				for (i=0; i<34; ++i) {
+					if (!inventory[i].type) break;
+				}
+				if (i<34) {
+					t = cursor & 0x7F;
+					//An empty slot was found. Shove gear into it.
+					inventory[i] = equipment[t];
+					equipment[t].type = 0;
+					equipment[t].data = 0;
+					pstats.update |= UPD_SIDEBAR;
+				}
+			}			
+			if (sk&kb_2nd) {
 				//inventory mode. select/swap items in inventory
 				if (!cursormode) {
 					prevcursor = cursor;
@@ -744,9 +769,7 @@ void disp_ShowInventory(uint8_t state) {
 						pstats.update |= UPD_SIDEBAR;
 					} else disp_SwapInvSlots(cursor,prevcursor); //undo if failed
 				}
-			} else;
-		}
-		if (sk|update) {
+			}
 			t = cursor & 0x7F;
 			if (cursor&0x80) {
 				//Cursor in equipment
@@ -770,100 +793,102 @@ void disp_ShowInventory(uint8_t state) {
 					else	cursor = 0x80+7;
 				}
 			}
+			/* ======================= Render content ==================== */
+			disp_statsummary();	// Right side. To get stuff away from this func
+			gfx_SetColor(COLOR_DARKGRAY);
+			gfx_FillRectangle(123+4,6,4,77);	//vertical divider
+			gfx_FillRectangle(127+4,47,95,4);	//quick/inv divider
+			gfx_FillRectangle(82+4,79,45,4);	//equip/packs divider
 			
-			/* Backer */
-			gfx_SetColor(COLOR_GUNMETALGRAY);
-			gfx_FillRectangle_NoClip(4,4,224,224);
-			gfx_SetTextFGColor(COLOR_WHITE);
-			gfx_SetTextXY(6,10);
-			if (!state) {
-				disp_stats("STR: ",disp_diff(str));
-				disp_stats("AGI: ",disp_diff(spd));
-				disp_stats("INT: ",disp_diff(smrt));
-				gfx_SetTextXY(6,gfx_GetTextY() + 4);
-				disp_stats("ATK: ",disp_diff(atk));
-				disp_stats("SNK: ",disp_diff(snk));
-				disp_stats("RWR: ",disp_diff(rawrs));
-				disp_stats("DEF: ",disp_diff(def));
-				disp_stats("BLK: ",disp_diff(blk));
-				disp_stats("REF: ",disp_diff(refl));
-				gfx_SetTextXY(6,gfx_GetTextY() + 4);
-				disp_stats("MATK: ",disp_diff(matk));
-				disp_stats("FATK: ",disp_diff(fatk));
-				disp_stats("EATK: ",disp_diff(eatk));
-				disp_stats("PATK: ",disp_diff(patk));
-				gfx_SetTextXY(6,gfx_GetTextY() + 4);
-				disp_stats("MDEF: ",disp_diff(mdef));
-				disp_stats("FDEF: ",disp_diff(fdef));
-				disp_stats("EDEF: ",disp_diff(edef));
-				disp_stats("PDEF: ",disp_diff(pdef));				
-				gfx_SetTextXY(6,gfx_GetTextY() + 4);
-				disp_stats("S Pts: ",pstats.statpoints,0);
-				disp_stats("T Pts: ",pstats.talentpoints,0);
-				gfx_SetColor(COLOR_DARKGRAY);
-				gfx_FillRectangle(123+4,6,4,77);	//vertical divider
-				gfx_FillRectangle(127+4,47,95,4);	//quick/inv divider
-				gfx_FillRectangle(82+4,79,45,4);	//equip/packs divider
-				
-				//Equipment
-				for (i=0; i<8; ++i) {
-					x = 4+80+4 + 18*(i&1);
-					y = (i>>1) * 18 + 4+4;
-					t = equipment[i].type;
-					if (!t)	ptr = equipicons_tiles[i+1];	//skip over blank default
-					else	ptr = items_GetItemSprite(t);
-					gfx_Sprite_NoClip(ptr,x,y);
-				}
-				//Quickbar
-				for (i=0; i<10; ++i) {
-					x = 4+80+2+36+14 + 18*(i%5);
-					y = 4+4+ 18*(i/5);
-					t = quickbar[i].type;
-					if (!t)	ptr = equipicons_tiles[i+10];	//skip over top row
-					else	ptr = items_GetItemSprite(t);
-					gfx_Sprite_NoClip(ptr,x,y);
-				}
-				//Inventory
-				for (i=0; i<35; ++i) {
-					x = 4+80+2+36+14 + 18*(i%5);
-					y = 4+2+36+14+ 18*(i/5);
-					t = inventory[i].type;
-					if (!t)	ptr = equipicons_tiles[0];
-					else	ptr = items_GetItemSprite(t);
-					if (i==34) ptr = equipicons_tiles[9]; //trashcan
-					gfx_Sprite_NoClip(ptr,x,y);
-				}
-				//Should put inventory box selector here. Or something else.
-				gfx_SetColor(COLOR_PURPLE);
-				if (cursormode) {
-					disp_InvCursor(prevcursor);
-					gfx_SetColor(COLOR_ORANGE);
-				}
-				disp_InvCursor(cursor);
-				
-				gfx_SetColor(COLOR_BLACK);
-				gfx_FillRectangle_NoClip(0,228,320,12);
-				gfx_SetTextFGColor(COLOR_WHITE);
-				gfx_SetTextXY(4,230);
-				
-				if (cursor&0x80)	t = equipment[cursor&0x7F].type;
-				else				t = inventory[cursor].type;
-				items_PrintItemname_Bottom(t);
-				gfx_PrintString(" :: ");
-				gfx_PrintString(items_GetItemDesc(t));
-				
-				
-			} else if (state == 1) {
-				disp_stats("Pure stats page.",0,0);
-				disp_stats("Nothing here yet.",0,0);
-			} else {
-				disp_stats("idk what will go here.",0,0);
-				disp_stats("No plans yet.",0,0);
+			//Equipment
+			for (i=0; i<8; ++i) {
+				x = 4+80+4 + 18*(i&1);
+				y = (i>>1) * 18 + 4+4;
+				t = equipment[i].type;
+				if (!t)	ptr = equipicons_tiles[i+1];	//skip over blank default
+				else	ptr = items_GetItemSprite(t);
+				gfx_Sprite_NoClip(ptr,x,y);
 			}
-			disp_ShowSidebar();
-			gfx_SwapDraw();
-			update = 0;
+			//Quickbar
+			for (i=0; i<10; ++i) {
+				x = 4+80+2+36+14 + 18*(i%5);
+				y = 4+4+ 18*(i/5);
+				t = quickbar[i].type;
+				if (!t)	ptr = equipicons_tiles[i+10];	//skip over top row
+				else	ptr = items_GetItemSprite(t);
+				gfx_Sprite_NoClip(ptr,x,y);
+			}
+			//Inventory
+			for (i=0; i<35; ++i) {
+				x = 4+80+2+36+14 + 18*(i%5);
+				y = 4+2+36+14+ 18*(i/5);
+				t = inventory[i].type;
+				if (!t)	ptr = equipicons_tiles[0];
+				else	ptr = items_GetItemSprite(t);
+				if (i==34) ptr = equipicons_tiles[9]; //trashcan
+				gfx_Sprite_NoClip(ptr,x,y);
+			}
+			//Should put inventory box selector here. Or something else.
+			gfx_SetColor(COLOR_PURPLE);
+			if (cursormode) {
+				disp_InvCursor(prevcursor);
+				gfx_SetColor(COLOR_ORANGE);
+			}
+			disp_InvCursor(cursor);
+			
+			gfx_SetColor(COLOR_BLACK);
+			gfx_FillRectangle_NoClip(0,228,320,12);
+			gfx_SetTextFGColor(COLOR_WHITE);
+			gfx_SetTextXY(4,230);
+			
+			if (cursor&0x80)	t = equipment[cursor&0x7F].type;
+			else				t = inventory[cursor].type;
+			items_PrintItemname_Bottom(t);
+			gfx_PrintString(" :: ");
+			gfx_PrintString(items_GetItemDesc(t));
+			
+			
+		} else if (state == 1) {
+			disp_stats("Pure stats page.",0,0);
+			disp_stats("Nothing here yet.",0,0);
+		} else {
+			/* FOREST MAP. If add dungeon later, split this to also dungeoning. */
+			gfx_SetColor(COLOR_BLACK);
+			gfx_FillRectangle_NoClip(0,228,320,12);
+			gfx_SetTextFGColor(COLOR_GOLD);
+			gfx_PrintStringXY(string_forestmap,(224-gfx_GetStringWidth(string_forestmap))/2+4,(4+8));
+			t = 0;
+			for (i=0,y=(4+24); i<5; ++i,y+=40) {
+				for (j=0,x=(4+16); j<5; ++j,x+=40) {
+					if (forestmap_seen[t]) {
+						gfx_SetColor(COLOR_FORESTGREEN);
+						a = forestmap[t];
+						if (a&FEX_NORTH)	gfx_FillRectangle_NoClip(x+14,y-8 ,4,8);
+						if (a&FEX_SOUTH)	gfx_FillRectangle_NoClip(x+14,y+32,4,8);
+						if (a&FEX_EAST)		gfx_FillRectangle_NoClip(x+32,y+14,8,4);
+						if (a&FEX_WEST)		gfx_FillRectangle_NoClip(x-8 ,y+14,8,4);
+						c = COLOR_FORESTGREEN;
+						if (((invtimer>>3)&1)&&(t==(pstats.forestarea-1)))
+							c = COLOR_GOLD;
+					} else {
+						c = COLOR_GRAY;
+						if (t==0x0C)	c = COLOR_RED;
+					}
+					gfx_SetColor(c);
+					gfx_FillRectangle_NoClip(x,y,32,32);
+					gfx_SetTextFGColor(COLOR_WHITE);
+					gfx_SetTextXY(x+4,y+4);
+					gfx_PrintChar(t%5+'A');
+					gfx_PrintChar(t/5+'1');
+					++t;
+				}
+			}
+			//asm("nop");	//wat. System crashes without this around. Maybe if/else nesting got too long/deep?
+			update = 1;
+			++invtimer;
 		}
+		disp_ShowSidebar();
+		gfx_SwapDraw();
 	}
 	while (kb_AnyKey());
 	mobj_recalcplayer();	//MOVE THIS TO START, CLOSE, AND ON GEARCHANGE

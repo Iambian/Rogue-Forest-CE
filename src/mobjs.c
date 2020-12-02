@@ -92,6 +92,7 @@ void mobj_newchar(void) {
 	playermobj.type = 0xFF;
 	playermobj.hp = playercalc.maxhp;
 	playermobj.mp = playercalc.maxmp;
+	memset(forestmap_seen,0,sizeof forestmap_seen);
 	
 	dbg_sprintf(dbgout,"2 playermobj hp %i\n",playermobj.hp);
 	dbg_sprintf(dbgout,"playermobj mp %i\n",playermobj.mp);
@@ -204,7 +205,7 @@ void mobj_recalcplayer(void) {
 	item_t *gear;
 	
 	playercalc = playerbase;
-	//return;	//Okay maybe memory is getting corrupted someplace
+	return;	//Okay maybe memory is getting corrupted someplace
 	for (i = 0; i<8; ++i) {
 		if (equipment[i].type) {
 			gear = &equipment[i];
