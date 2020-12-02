@@ -92,6 +92,7 @@ void mobj_recalcplayer(void);
 void mobj_pushmove(mobj_t* mobj, uint8_t newx, uint8_t newy);
 uint8_t mobj_trymove(mobj_t *mobj, int8_t dx, int8_t dy);
 void mobj_basicmove(mobj_t *mobj);
+void mobj_zoomove(mobj_t *mobj);
 
 
 

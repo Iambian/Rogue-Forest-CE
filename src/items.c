@@ -34,7 +34,10 @@ char descbuf[80];
 
 /* 'name' is the empty entity with which to flag that this stat isn't available.
 	Alternatively, value being zero can be used for this in a more portable way */
-	
+itemdef_t emptyitemdef = {
+	//  item display name,equtype, enchantmlt,val1,   offset1,val2, offset2
+	"Empty\nItem"        ,EFL_MSC, fl2fx(1.0),   0, MD(name) ,   0,MD(name)
+};
 //Type/id is indexed by position in this array
 itemdef_t equipdefs[] = {
 	//  item display name,equtype, enchantmlt,val1,   offset1,val2, offset2
@@ -219,7 +222,13 @@ char *items_PrintItemStatName(uint8_t offset) {
 	}
 }
 
-
+itemdef_t *items_GetItemDef(item_t *item) {
+	uint8_t i;
+	i = item->type;
+	if (!i || (i>64)) return &emptyitemdef;
+	--i;
+	return &equipdefs[i];
+}
 
 
 char *items_GetItemDesc(uint8_t id) {
@@ -243,7 +252,7 @@ char *items_GetItemDesc(uint8_t id) {
 		}
 		to = item->offset2;
 		tm2= item->modifier2;
-		if (tm&tm2) strcat(descbuf,", ");
+		if (tm&&tm2) strcat(descbuf,", ");
 		if (tm2) {
 			strcat(descbuf,items_PrintItemStatName(to));
 			strcat(descbuf,util_BufInt(tm2));

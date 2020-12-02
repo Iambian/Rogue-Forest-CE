@@ -35,13 +35,13 @@ mobjdef_t playerdef = {
 mobjdef_t enemydef[] = {
 //	name field ,spriteobj ,scriptname 
 //	mhp,mmp,str,spd,smr,atk,def,blk,ref,snk,per,rwr,mdf,mat,fdf,fat,edf,eat,pdf,pat
-	{"Rat"     ,S_NORMRAT ,mobj_basicmove,
+	{"Rat"     ,S_NORMRAT ,mobj_zoomove,
 	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
-	{"Dire Rat",S_DIRERAT ,mobj_basicmove,
+	{"Dire Rat",S_DIRERAT ,mobj_zoomove,
 	 20,  0,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
-	{"Squirrel",S_SQUIRREL,mobj_basicmove,
+	{"Squirrel",S_SQUIRREL,mobj_zoomove,
 	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
-	{"Snake",S_SNAKE,mobj_basicmove,
+	{"Snake",S_SNAKE,mobj_zoomove,
 	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
 	
 };
@@ -201,21 +201,24 @@ void mobj_recalcplayer(void) {
 	uint8_t i,j,offset;
 	int t,enchantval;
 	itemdef_t *item;
+	item_t *gear;
 	
 	playercalc = playerbase;
-	return;	//Okay maybe memory is getting corrupted someplace
+	//return;	//Okay maybe memory is getting corrupted someplace
 	for (i = 0; i<8; ++i) {
 		if (equipment[i].type) {
-			item = &equipdefs[equipment[i].type];
+			gear = &equipment[i];
+			item = items_GetItemDef(gear);
 			offset = item->offset1;
 			t = item->modifier1;
+			dbg_sprintf(dbgout,"Iter %i, type %i, offset %i, mod %i\n",i,equipment[i].type,offset,t);
 			if (t) {
-				*(((uint8_t*)&playercalc)+offset) += t + (item->enchantmult * t)>>8;
+				*(((uint8_t*)&playercalc)+offset) += t + ((item->enchantmult * gear->data * t)>>8);
 			}
 			offset = item->offset2;
 			t = item->modifier2;
 			if (t) {
-				*(((uint8_t*)&playercalc)+offset) += t + (item->enchantmult * t)>>8;
+				*(((uint8_t*)&playercalc)+offset) += t + ((item->enchantmult * gear->data * t)>>8);
 			}
 		}
 	}
@@ -226,11 +229,14 @@ void mobj_pushmove(mobj_t* mobj, uint8_t newx, uint8_t newy) {
 	moving_t *m;
 	
 	m = &movestack[moveentries];
+	++moveentries;
 	m->mobj = mobj;
 	m->startx = mobj->x*16;
 	m->starty = mobj->y*16;
 	m->endx = newx*16;
 	m->endy = newy*16;
+	mobj->x = newx;
+	mobj->y = newy;
 }
 
 uint8_t mobj_trymove(mobj_t *mobj, int8_t dx, int8_t dy) {
@@ -263,7 +269,23 @@ void mobj_basicmove(mobj_t *mobj) {
 	}
 }
 
-
+void mobj_zoomove(mobj_t *mobj) {
+	int8_t dx,dy;
+	uint8_t nx,ny;
+	
+	mobj->flags &= ~MSTAT_ISMOVING;
+	//if (randInt(0,10)>2) return;	//A sedate pace
+	nx = mobj->x;
+	ny = mobj->y;
+	dx = randInt(-1,1);
+	dy = randInt(-1,1);
+	if (mobj_trymove(mobj,dx,0)) nx = nx+dx;
+	if (mobj_trymove(mobj,0,dy)) ny = ny+dy;
+	if ((nx != mobj->x) && (ny != mobj->y)) {
+		mobj_pushmove(mobj,nx,ny);
+		mobj->flags |= MSTAT_ISMOVING;
+	}
+}
 
 
 

@@ -152,7 +152,7 @@ char *items_GetItemDesc(uint8_t id);
 void items_PrintItemname_Left(uint8_t id);
 void items_PrintItemname_Bottom(uint8_t id);
 uint8_t items_GetItemType(uint8_t id);
-
+itemdef_t *items_GetItemDef(item_t *item);
 
 
 

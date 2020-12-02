@@ -144,6 +144,7 @@ int main(void) {
 	uint8_t onwarp;
 	uint8_t state;
 	uint8_t curoption;
+	moving_t *mover;
 	
 	
 	game_Initialize();
@@ -155,7 +156,7 @@ int main(void) {
 	gfx_SwapDraw();
 	gfx_FillScreen(0);
 	pstats.update = UPD_SIDEBAR;
-	dbg_sprintf(dbgerr,"Curmap location %X\n",&curmap);
+	//dbg_sprintf(dbgerr,"Curmap location %X\n",&curmap);
 	ecycle = facing = 0;
 	sobj = NULL; //So the compiler doesn't complain
 	mobj = NULL; //Also so the compiler doesn't complain
@@ -308,13 +309,12 @@ int main(void) {
 			
 			//Enemy movement movestack populate. Only do this if you are moving
 			//due to a keypress, or if keypress was stuffed due to a wait command.
+			moveentries = 0;
 			if (moving&k) {
-				moveentries = 0;
-				//
-				//
-				//Populate movement lists.
-				//
-				//
+				for (i=0; i<nummobjs; ++i) {
+					mobj = &mobjs[i];
+					(mobj_getmobjdef(mobj)->script)(mobj);
+				}
 			}
 			
 			
@@ -350,12 +350,15 @@ int main(void) {
 							gfx_TransparentSprite(*(mobj_getmobjdef(mobj)->sprobj+((ecycle&0x08)>>3)),ex-cx,ey-cy);
 						}
 					}
-					//
-					//
-					//Add moving and nonmoving enemies here.
-					//Smooth move logic
-					//
-					//
+					//Moving enemies and other objects thrown into the movestack
+					for (i=0; i<moveentries; ++i) {
+						//if (!j) dbg_sprintf(dbgout,"Movestack contents: %i\n",moveentries);
+						mover = &movestack[i];
+						ex = (((mover->endx - mover->startx)/4)*j)+mover->startx;
+						ey = (((mover->endy - mover->starty)/4)*j)+mover->starty;
+						gfx_TransparentSprite(*(mobj_getmobjdef(mover->mobj)->sprobj+((ecycle&0x08)>>3)),ex-cx,ey-cy);
+						//if (j==3) mover->mobj->flags &= ~MSTAT_ISMOVING;	//Fixes certain bugs. UNDO THIS WHEN MAKING COMPLEX MORE-THAN-4-CYCLES MOVES
+					}
 					gfx_SetTransparentColor(color);
 					if (j<3) {
 						++ecycle;
@@ -368,6 +371,13 @@ int main(void) {
 				// More move logic for extended animations. To be implemented
 				// and/or unified later.
 				//
+				
+				//Enemies have finished moving by now. Make sure their move
+				//flag is turned off.
+				for (i=0; i<nummobjs; ++i) {
+					mobj = &mobjs[i];
+					mobj->flags &= ~MSTAT_ISMOVING;
+				}
 				pstats.x = xpos;
 				pstats.y = ypos;
 			} else {	//Nobody moved. Let's get going with this thing.
@@ -384,21 +394,6 @@ int main(void) {
 			}
 			gfx_SetClipRegion(0,0,320,240);
 			
-			
-			
-			//Draw final state of the enemies
-			/*
-			gfx_SetClipRegion(4,4,4+224,4+224);
-			color = gfx_SetTransparentColor(charequtiles_palette_offset);
-			for (i=0;i<nummobjs;++i) {
-				mobj = &mobjs[i];
-				ex = mobj->x*16 + 4;
-				ey = mobj->y*16 + 4;
-				gfx_TransparentSprite(*(mobj_getmobjdef(mobj)->sprobj+((ecycle&0x08)>>3)),ex-cx,ey-cy);
-			}
-			gfx_SetTransparentColor(color);
-			gfx_SetClipRegion(0,0,320,240);
-			*/
 			//Animate static tiles. that which does animate.
 			
 			if (ecycle&0x07 == 0x07) {
@@ -457,9 +452,22 @@ int main(void) {
 /* ========================================================================= */
 /* ========================================================================= */
 
+//Not prototyped. Only used in disp_ShowSidebar()
+void disp_Bar(uint8_t smallvalue,uint8_t largevalue, uint8_t barcolor, uint8_t ypos) {
+	int w1,w2;
+	if (largevalue)	w1 = (smallvalue * 80) / largevalue;
+	else			w1 = 80;
+	if (w1>80) w1 = 80;
+	w2 = 80 - w1;
+	gfx_SetColor(barcolor);
+	gfx_FillRectangle_NoClip(HPMP_X+2,ypos,w1,9);
+	gfx_SetColor(COLOR_DARKGRAY);
+	gfx_FillRectangle_NoClip(HPMP_X+2+w1,ypos,w2,9);
+}
+
 #define sidebar_center(strwidth) ((((LCD_WIDTH-SBAR_LEFT)-strwidth)/2)+SBAR_LEFT)
 void disp_ShowSidebar(void) {
-	uint8_t u;
+	uint8_t u,w1,w2;
 	uint8_t y;
 	uint8_t w,sw,t,i;
 	int x;
@@ -468,7 +476,7 @@ void disp_ShowSidebar(void) {
 	
 	u = pstats.update | pstats.updateprev;
 	
-	if (u|UPD_BACKERS) {
+	if (u&UPD_BACKERS) {
 		/* the overall background */
 		gfx_SetColor(COLOR_DARKGRAY);
 		gfx_FillRectangle_NoClip(SBAR_LEFT,0,LCD_WIDTH-SBAR_LEFT,LCD_HEIGHT-12);
@@ -487,8 +495,8 @@ void disp_ShowSidebar(void) {
 		gfx_Sprite_NoClip(areagfx,MAPAREA_X,MAPAREA_Y);
 		gfx_Sprite_NoClip(floorgfx,MAPFLOOR_X,MAPFLOOR_Y);
 	}
-	if (u|UPD_XP) {
-		//Draw bar at XPFOOD_X+2,XPFOOD_Y+2, w80,h9. COLOR_YELLOW
+	if (u&UPD_XP) {
+		disp_Bar(pstats.xp, maxlevel_table[pstats.level], COLOR_GOLD, XPFOOD_Y+2);
 		gfx_SetTextFGColor(COLOR_BLACK);
 		temp = pstats.xp*100/maxlevel_table[pstats.level];
 		w  = 36 + util_GetNumWidth(pstats.level+1);
@@ -501,13 +509,13 @@ void disp_ShowSidebar(void) {
 		gfx_PrintString("  LV ");
 		gfx_PrintUInt(pstats.level+1,1);
 	}
-	if (u|UPD_FOOD) {
-		//Draw bar at XPFOOD_X+2,XPFOOD_Y+21, w80,h9. COLOR_RED
+	if (u&UPD_FOOD) {
+		disp_Bar(pstats.food, pstats.maxfood, COLOR_RED, XPFOOD_Y+21);
 		gfx_SetTextFGColor(COLOR_WHITE);
 		gfx_SetTextXY(sidebar_center(util_GetNumWidth(pstats.food)),XPFOOD_Y+22);
 		gfx_PrintUInt(pstats.food,1);
 	}
-	if (u|UPD_MINI) {
+	if (u&UPD_MINI) {
 		gfx_SetTextFGColor(COLOR_WHITE);
 		gfx_SetTextXY(MAPAREA_X+1,MAPAREA_Y+11);
 		disp_PrintDungeonID();  //Insert area text
@@ -515,9 +523,9 @@ void disp_ShowSidebar(void) {
 		gfx_SetTextXY(MAPFLOOR_X+1,MAPFLOOR_Y+11);
 		disp_PrintDungeonFloor(); //Insert floor text
 	}
-	if (u|UPD_HP) {
+	if (u&UPD_HP) {
 		mobj_recalcplayer();
-		//Draw bar at HPMP_X+2,HPMP_Y+2, w80,h9. COLOR_GREEN
+		disp_Bar(playermobj.hp, playercalc.maxhp, COLOR_FORESTGREEN, HPMP_Y+2);
 		gfx_SetTextFGColor(COLOR_WHITE);
 		w = 8+util_GetNumWidth(playermobj.hp)+util_GetNumWidth(playercalc.maxhp);
 		gfx_SetTextXY(sidebar_center(w),HPMP_Y+3);
@@ -525,9 +533,10 @@ void disp_ShowSidebar(void) {
 		gfx_PrintChar('/');
 		gfx_PrintUInt(playercalc.maxhp,1);
 	}
-	if (u|UPD_MP) {
+	if (u&UPD_MP) {
 		mobj_recalcplayer();
 		//Draw bar at HPMP_X+2,HPMP_Y+21, w80,h9. COLOR_BLUE
+		disp_Bar(playermobj.mp, playercalc.maxmp, COLOR_BLUE, HPMP_Y+21);
 		gfx_SetTextFGColor(COLOR_WHITE);
 		w = 8+util_GetNumWidth(playermobj.mp)+util_GetNumWidth(playercalc.maxmp);
 		gfx_SetTextXY(sidebar_center(w),HPMP_Y+22);
@@ -535,7 +544,7 @@ void disp_ShowSidebar(void) {
 		gfx_PrintChar('/');
 		gfx_PrintUInt(playercalc.maxmp,1);
 	}
-	if (u|UPD_CURGEAR) {
+	if (u&UPD_CURGEAR) {
 		t = equipment[5].type;
 		if (!t)	ptr = equipicons_tiles[6];
 		else	ptr = items_GetItemSprite(t);
@@ -550,7 +559,7 @@ void disp_ShowSidebar(void) {
 		gfx_SetTextXY(CURGEAR_X+18,CURGEAR_Y+19);
 		items_PrintItemname_Left(t);
 	}
-	if (u|UPD_QUICKSET) {
+	if (u&UPD_QUICKSET) {
 		//Quickbar
 		for (i=0; i<10; ++i) {
 			x = QUICKSET_X + 18*(i%5);
@@ -688,7 +697,7 @@ void disp_ShowInventory(uint8_t state) {
 			if ((0xFF == items_GetItemType(t)) || !t) {
 				//dbg_sprintf(dbgout,"Keyorg: %i\n",nk);
 				disp_SwapInvSlots((nk-1)|0xC0,cursor);
-				pstats.update |= UPD_CURGEAR|UPD_QUICKSET;
+				pstats.update |= UPD_SIDEBAR;
 				update = 1;
 			}
 		}
@@ -712,6 +721,7 @@ void disp_ShowInventory(uint8_t state) {
 						inventory[i] = equipment[t];
 						equipment[t].type = 0;
 						equipment[t].data = 0;
+						pstats.update |= UPD_SIDEBAR;
 					}
 				}
 			}
@@ -731,7 +741,7 @@ void disp_ShowInventory(uint8_t state) {
 						mobj_recalcplayer();	//MOVE THIS TO START, CLOSE, AND ON GEARCHANGE
 						inventory[34].type = 0;
 						inventory[34].data = 0; //Items moved to trashcan are deleted.
-						pstats.update |= UPD_CURGEAR|UPD_QUICKSET;
+						pstats.update |= UPD_SIDEBAR;
 					} else disp_SwapInvSlots(cursor,prevcursor); //undo if failed
 				}
 			} else;
