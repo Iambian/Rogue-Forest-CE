@@ -31,8 +31,8 @@ int maxlevel_table[] = {
 };
 
 /* ROOMS ROOMS ROOMS ROOMS ROOMS ROOMS */
-uint8_t numrooms;				//Number of rooms
-room_t roomlist[NUMROOMS_MAX];	//Rooms of type 0 are not used/read
+uint8_t numrooms;					//Number of rooms
+room_t roomlist[NUMROOMS_MAX+9];	//Rooms of type 0 are not used/read
 floordat_t floordat;
 
 /* Dungeon graphics management */
@@ -76,6 +76,8 @@ uint8_t forestmap_start;
 5 |         |
   \-+-+-+-+-/
 */
+
+char *timebuf[20];
 
 uint8_t forestmap_test_start = 0x01;
 uint8_t forestmap_test[] = {
@@ -133,6 +135,8 @@ uint8_t disp_ShowTitleScreen(void);
 void disp_ShowCredits(void);
 void disp_Menu(char **options,uint8_t ypos,uint8_t curpos,uint8_t maxentries);
 uint8_t disp_ClampCoord(uint8_t coord);
+void disp_PrintStatusBar(void);
+void disp_PrintTime(void);
 
 int main(void) {
 	int sec,subsec;
@@ -152,9 +156,6 @@ int main(void) {
 	
 	game_Initialize();
 	
-	/* Testing conditions */
-	mobj_newchar();		//Generates overworld map and warps into first floor
-	
 	gfx_FillScreen(0);
 	gfx_SwapDraw();
 	gfx_FillScreen(0);
@@ -163,7 +164,7 @@ int main(void) {
 	ecycle = facing = 0;
 	sobj = NULL; //So the compiler doesn't complain
 	mobj = NULL; //Also so the compiler doesn't complain
-	state = 3;
+	state = 0;
 	curoption = 0;
 	while (1) {
 		kb_Scan();
@@ -173,7 +174,14 @@ int main(void) {
 		if (!state) {	//Title screen
 			i = disp_ShowTitleScreen();
 			if (i==0) {
-				//newgame
+				mobj_newchar();		//Generates overworld map and warps into first floor
+				gfx_FillScreen(0);
+				gfx_SwapDraw();
+				gfx_FillScreen(0);
+				gfx_SwapDraw();
+				state = 3;
+				pstats.update = UPD_SIDEBAR;
+				continue;
 			} else if (i==1) {
 				//loadgame
 			} else if (i==2) {
@@ -189,7 +197,7 @@ int main(void) {
 			state = 0;
 			continue;
 		} else if (state == 3) {	//Main game mode
-			if (kc & kb_Mode) break;
+			if (kc & kb_Mode) { state = 0; continue; }
 			++ecycle;
 			
 			if (kc & kb_Yequ)			disp_ShowInventory(0);
@@ -281,14 +289,15 @@ int main(void) {
 							pstats.hascherry = 1;
 							curmap->data[ypos*128+xpos] = 0x48;	//grass tile.
 							sobj = NULL;
+							gfx_SetColor(COLOR_BLACK);
+							gfx_FillRectangle_NoClip(0,228,320,12);
+							gfx_SetTextFGColor(COLOR_WHITE);
+							gfx_SetTextXY(4,230);
+							gfx_PrintString("Cherry obtained in ");
+							disp_PrintTime();
 							disp_Notice("You ate the Cherry of Yendor.\nIt was delicious.");
-							
-							//
-							//
-							//FOR NOW, JUST ROLL THE END CREDITS AND CALL IT A DAY.
-							//
-							//
-							
+							state = 0;
+							continue;
 						}
 					} else {
 						
@@ -436,11 +445,12 @@ int main(void) {
 				//conditions match?
 				//
 			} else {
-				gfx_PrintString("| Inventory |  Stats  |    Map    |");
+				disp_PrintStatusBar();
 			}
 		}
 		gfx_SwapDraw();
 	}
+	asm("nop");
 	gfx_End();
 	return 0;
 }
@@ -910,9 +920,11 @@ uint8_t disp_ShowTitleScreen(void) {
 			gfx_FillScreen(COLOR_FORESTGREEN);
 			gfx_SetTextFGColor(COLOR_GOLD);
 			gfx_SetTextScale(3,3);
-			gfx_PrintStringXY(title_head,disp_SetCenter(title_head),10);
+			//gfx_PrintStringXY(title_head,disp_SetCenter(title_head),10);
+			asm_DrawTitleHead(rofotitle);
 			disp_Menu(title_options,100,curpos,maxopt);
 			gfx_PrintStringXY(VERSION,LCD_WIDTH-gfx_GetStringWidth(VERSION),LCD_HEIGHT-10);
+			gfx_PrintStringXY("Random Petting Zoo Edition",0,LCD_HEIGHT-10);
 			gfx_SwapDraw();
 			while (kb_AnyKey());	//wait until key release
 			if (kc&kb_Mode)	return maxopt-1;
@@ -938,6 +950,8 @@ void disp_ShowCreditEntry(void **sprite, char *s,uint8_t timer) {
 	gfx_SetTextFGColor(COLOR_LIGHTGRAY);
 	gfx_PrintString(s);
 	gfx_SetTextXY(x,y+24);
+	gfx_SetTransparentColor(color);
+
 }
 
 void disp_ShowCredits(void) {
@@ -955,7 +969,7 @@ void disp_ShowCredits(void) {
 		disp_ShowCreditEntry(S_ANGEL,"Jacobly -- CE Toolchain",timer);
 		disp_ShowCreditEntry(S_REAPER,"MateoConLechuga -- Toolchain/ConvImg",timer);
 		disp_ShowCreditEntry(S_HIDDEN,"DragonDePlatino -- DawnLike tileset",timer);
-		
+
 		gfx_SwapDraw();
 		++timer;
 	}
@@ -998,7 +1012,7 @@ void disp_Menu(char **options,uint8_t ypos,uint8_t curpos,uint8_t maxentries) {
 		disp_SetCenter(s);
 		gfx_PrintString(s);
 	}
-	gfx_SetTextFGColor(COLOR_BLACK);
+	gfx_SetTextFGColor(COLOR_WHITE);
 	gfx_SetTextScale(1,1);
 }
 
@@ -1010,8 +1024,37 @@ uint8_t disp_ClampCoord(uint8_t coord) {
 	return c;
 }
 
+void disp_PrintStatusBar(void) {
+	gfx_PrintString("  Inventory  |  Stats  |  Map  | Time  ");
+	disp_PrintTime();
+}
 
-
+void disp_PrintTime(void) {
+	uint8_t cur_sec,cur_min,cur_hour;
+	
+	cur_hour = rtc_Hours;
+	cur_min = rtc_Minutes;
+	cur_sec = rtc_Seconds;
+	
+	//timedelta: now - start -> delta
+	if ((cur_sec-=pstats.start_sec)>60) {
+		cur_sec += 60;
+		cur_min -= 1;
+	}
+	if ((cur_min-=pstats.start_min)>60) {
+		cur_min += 60;
+		cur_hour -= 1;
+	}
+	if ((cur_hour-=pstats.start_hour)>24) {
+		cur_hour += 24;
+	}
+	gfx_PrintUInt(cur_hour,1);
+	gfx_PrintChar(':');
+	gfx_PrintUInt(cur_min,2);
+	if (cur_sec&1)	gfx_PrintChar(':');
+	else			gfx_PrintChar(' ');
+	gfx_PrintUInt(cur_sec,2);
+}
 
 
 
@@ -1097,7 +1140,11 @@ void game_Initialize(void) {
 	srand(rtc_Time());
 	
 	gfx_SetDrawScreen();	//Drawing on screen buffer our room things.
+	//No clue why I have to do this but there's memory corruption going on
+	//some place that's not related to this at all. This is just a band-aid
 	gfx_SetTransparentColor(COLOR_TRANS);
+	gfx_SetTransparentColor(COLOR_TRANS);
+	gfx_SetTextTransparentColor(COLOR_TRANS);
 	gfx_SetTextTransparentColor(COLOR_TRANS);
 	gfx_SetTextBGColor(COLOR_TRANS);
 	gfx_SetTextFGColor(COLOR_WHITE);

@@ -55,7 +55,7 @@ palettes:
       - color: {index: 10, r: 0, g: 255, b: 255}     #entry 10 - cyan
       - color: {index: 11, r: 76, g: 255, b: 0}      #entry 11 - lime
       - color: {index: 12, r: 255, g: 106, b: 0}     #entry 12 - orange
-      - color: {index: 13, r: 42, g: 128, b: 0}      #entry 13 - forest green
+      - color: {index: 13, r: 16, g: 96, b: 0}       #entry 13 - forest green
       - color: {index: 14, r: 96, g: 96, b: 96}      #entry 14 - dark gray
       - color: {index: 15, r: 128, g: 0, b: 128}     #entry 15 - purple
   - name: dtiles_pal
@@ -102,6 +102,7 @@ converts:
       - ui/digitbar_btm.png
       - ui/areagfx.png
       - ui/floorgfx.png
+      - ui/rofotitle.png
     tilesets:
       tile-width: 16
       tile-height: 16

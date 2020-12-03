@@ -8,6 +8,7 @@
 typedef struct pstats_st {
 	uint8_t empty;			//MUST BE FIRST ENTRY IN PSTATS_ST OR THINGS BREAK
 	uint8_t update,updateprev;
+	uint8_t start_sec,start_min,start_hour;
 	uint8_t x,y;
 	uint8_t subx,suby;
 	uint8_t forestarea;		//Current location in top level forest area
@@ -79,7 +80,7 @@ extern gfx_sprite_t **main_tilemap;
 extern struct pstats_st pstats;
 extern int maxlevel_table[];
 extern uint8_t numrooms;
-extern room_t roomlist[NUMROOMS_MAX];
+extern room_t roomlist[NUMROOMS_MAX+9];
 extern floordat_t floordat;
 
 extern int totalgens;
@@ -115,7 +116,7 @@ uint8_t	*asm_SetTile2ColorStart(void);
 void 	asm_LoadMinimap(uint8_t xpos, uint8_t ypos);
 void	asm_InterpolateMap(void);
 uint8_t asm_GetNumpad(void);
-
+void 	asm_DrawTitleHead(gfx_sprite_t* sprite);
 
 
 
