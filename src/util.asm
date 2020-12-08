@@ -4,7 +4,6 @@ XDEF _asm_LoadMinimap
 XDEF _asm_SetTile2ColorStart
 XDEF _asm_InterpolateMap
 XDEF _asm_GetNumpad
-XDEF _asm_DrawTitleHead
 
 XREF _gfx_SetColor
 XREF _gfx_Rectangle_NoClip
@@ -46,7 +45,7 @@ Op6               EQU $D0062F ;''
 
 DRAW_BUFFER       EQU $E30014
 
-
+ 
       
 
 XREF _curmap
@@ -303,16 +302,3 @@ db 34,26,18,35,27,19,36,28,20,33
       
       
       
-_asm_DrawTitleHead:
-      pop   bc
-      pop   hl
-      push  hl
-      inc   hl
-      inc   hl
-      push  bc
-      ld    de,(DRAW_BUFFER)
-      ld    bc,320*60
-      ldir
-      ret
-
-

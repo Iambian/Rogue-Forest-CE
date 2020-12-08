@@ -1,106 +1,9 @@
-#ifndef __DEFS__INCGUARD__
-#define __DEFS__INCGUARD__
-
-#define VERSION "v0.1"
-
+#ifndef __INCGUARD_DEFS__
+#define __INCGUARD_DEFS__
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ start ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#define VERSION "0.02"
 #define gfx_SetPaletteEntry(offset,color1555) ((uint16_t*)0xE30200)[offset] = color1555;
-
-//Clip through walls by setting NOCLIP to 1
-#define NOCLIP 0
-
-#define SBAR_LEFT	(4+16*14+4)
-#define SBAR_TOP	2
-#define XPFOOD_X	(SBAR_LEFT+2)
-#define XPFOOD_Y	(SBAR_TOP+2)
-//--
-#define MINIMAP_X	(SBAR_LEFT+1)
-#define MINIMAP_Y	(XPFOOD_Y+32+2)
-#define MAPAREA_X	(MINIMAP_X+67)
-#define MAPAREA_Y	(MINIMAP_Y+1)
-#define MAPFLOOR_X	(MAPAREA_X)
-#define MAPFLOOR_Y	(MAPAREA_Y+28)
-//--
-#define HPMP_X		(SBAR_LEFT+2)
-#define HPMP_Y		(MINIMAP_Y+66+2)
-#define CURGEAR_X	(SBAR_LEFT+2)
-#define CURGEAR_Y	(HPMP_Y+32+3)
-#define QUICKSET_X	(SBAR_LEFT+0)
-#define QUICKSET_Y	(CURGEAR_Y+34+3)
-
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#define UPD_XP			(1<<0)
-#define UPD_FOOD		(1<<1)
-#define UPD_MINI		(1<<2)
-#define UPD_HP			(1<<3)
-#define UPD_MP			(1<<4)
-#define UPD_CURGEAR		(1<<5)
-#define UPD_QUICKSET	(1<<6)
-#define UPD_BACKERS		(1<<7)
-#define UPD_SIDEBAR		0xFF
-
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#define FLOORBASE 0x80
-//Offset+1 = trap activated
-#define TILE_TRAP1	(FLOORBASE+0)
-#define TILE_TRAP2	(FLOORBASE+2)
-#define TILE_TRAP3	(FLOORBASE+4)
-#define TILE_TRAP4	(FLOORBASE+6)
-#define TILE_TRAP5	(FLOORBASE+8)
-#define TILE_TRAP6	(FLOORBASE+10)
-#define TILE_TRAP7	(FLOORBASE+12)
-//Offset+1 = door embedded in a vertical wall (side-view)
-#define TILE_DOOROPEN	(FLOORBASE+14)
-#define TILE_DOORCLOSED	(FLOORBASE+16)
-#define TILE_DOORLOCKED	(FLOORBASE+18)
-#define TILE_DOORSEALED	(FLOORBASE+20)
-//Offset+0 = portal disabled, Offsets +1 and +2 = portal active animation frames
-#define TILE_PORTAL1	(FLOORBASE+22)
-#define TILE_PORTAL2	(FLOORBASE+25)
-#define TILE_STAIRSUP	(FLOORBASE+28)
-#define TILE_STAIRSDOWN	(FLOORBASE+29)
-#define TILE_STAIRSBIGUP	(FLOORBASE+30)
-#define TILE_STAIRSBIGDOWN	(FLOORBASE+31)
-//Offset+0 = chest closed, +1 = opened
-#define TILE_TREASURECHEST	(FLOORBASE+32)
-#define TILE_TREASURELOCKED	(FLOORBASE+34)
-#define TILE_TREASURESEALED	(FLOORBASE+36)
-#define TILE_CRYSTALTREASURE	(FLOORBASE+38)
-//Misc
-#define TILE_MONEYBIG		(FLOORBASE+40)
-#define TILE_MONEYMED		(FLOORBASE+41)
-#define TILE_MONEYSMOL		(FLOORBASE+42)
-#define TILE_KEY			(FLOORBASE+43)
-#define TILE_MASTERKEY		(FLOORBASE+44)
-#define TILE_LAMP			(FLOORBASE+45)
-#define TILE_KEYCARD		(FLOORBASE+46)
-#define TILE_CANDLES		(FLOORBASE+47)
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#define KITEMEBASE 0xC0
-
-#define TILE_MCGUFFIN1 (KITEMEBASE+0)
-#define TILE_MCGUFFIN2 (KITEMEBASE+2)
-#define TILE_MCGUFFIN3 (KITEMEBASE+4)
-#define TILE_MCGUFFIN4 (KITEMEBASE+6)
-#define TILE_SMOLFOOD  (KITEMEBASE+8)
-#define TILE_MOREFOOD  (KITEMEBASE+9)
-#define TILE_BIGFOOD   (KITEMEBASE+10)
-#define TILE_ISSAFEAST (KITEMEBASE+11)
-#define TILE_LCHERRY   (KITEMEBASE+12)
-
-
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-//map exit macros
-#define FEX_WEST      (1<<0)
-#define FEX_EAST      (1<<1)
-#define FEX_SOUTH     (1<<2)
-#define FEX_NORTH     (1<<3)
-#define FEX_EXIT      (1<<4)
-#define FEX_DUNGEON   (1<<5)
-#define FEX_FLOORUP   (1<<6)
-#define FEX_FLOORDOWN (1<<7)
-
-
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* ------------------------------ Colors -------------------------- */
 #define COLOR_BLACK				0
 #define COLOR_WHITE				1
 #define COLOR_RED				2
@@ -117,13 +20,72 @@
 #define COLOR_FORESTGREEN		13
 #define COLOR_DARKGRAY			14
 #define COLOR_PURPLE			15
-
-#define DCOLOR_BLANK	16
-#define DCOLOR_FLOOR	17
-	
-
-#define NUMROOMS_MAX 20
-
+/* ------------------------------ Keyboard ------------------------ */
+#define kbit_Down		(1<<0)
+#define kbit_Left		(1<<1)
+#define kbit_Right		(1<<2)
+#define kbit_Up			(1<<3)
+#define kbit_Alpha		(1<<4)
+#define kbit_2nd		(1<<5)
+#define kbit_Mode		(1<<6)
+#define kbit_Del		(1<<7)
+/* ------------------------------- Tiles -------------------------- */
+#define wallAbase	( 0+(0*18))
+#define wallBbase	( 0+(1*18))
+#define wallCbase	( 0+(2*18))
+#define floorAbase	(64+(0*21))
+#define floorBbase	(64+(1*21))
+#define floorCbase	(64+(2*21))
+#define floortilebase	(128)
+#define kitembase	(128+64)
+/* --------------------------- Game State ------------------------- */
+#define GS_TITLE	0
+#define GS_NEWGAME	(GS_TITLE+1)
+#define GS_LOADGAME	(GS_TITLE+2)
+#define GS_CREDITS	(GS_TITLE+3)
+#define GS_QUIT		(GS_TITLE+4)
+#define GS_GAMEMODE	32
+/* ----------------------- Enemy Sprite Redefs -------------------- */
+#define S_NORMRAT	&(characters_tiles_data[0])
+#define S_DIRERAT	&(characters_tiles_data[2])
+#define S_SQUIRREL	&(characters_tiles_data[4])
+#define S_SNAKE		&(characters_tiles_data[6])
+#define S_LIZARD	&(characters_tiles_data[8])
+#define S_TURTLE	&(characters_tiles_data[10])
+#define S_LIZMAN	&(characters_tiles_data[12])
+#define S_HIDDEN	&(characters_tiles_data[14])
+#define S_ASP		&(characters_tiles_data[16])
+#define S_HYDRA		&(characters_tiles_data[18])
+#define S_WISP		&(characters_tiles_data[20])
+#define S_BEAN		&(characters_tiles_data[22])
+#define S_SKEL		&(characters_tiles_data[24])
+#define S_ZOMBIE	&(characters_tiles_data[26])
+#define S_ZOMBONE	&(characters_tiles_data[28])
+#define S_REAPER	&(characters_tiles_data[30])
+#define S_NECRO		&(characters_tiles_data[32])
+#define S_SHADE		&(characters_tiles_data[34])
+#define S_SCORPION	&(characters_tiles_data[36])
+#define S_LADYBUG	&(characters_tiles_data[38])
+#define S_SHARK		&(characters_tiles_data[40])
+#define S_FISH		&(characters_tiles_data[42])
+#define S_BAT		&(characters_tiles_data[44])
+#define S_SWAN		&(characters_tiles_data[46])
+#define S_PARROT	&(characters_tiles_data[48])
+#define S_CHICKEN	&(characters_tiles_data[50])
+#define S_DOGGO		&(characters_tiles_data[52])
+#define S_DOGMAN	&(characters_tiles_data[54])
+#define S_LIGHTS	&(characters_tiles_data[56])
+#define S_DARKS		&(characters_tiles_data[58])
+#define S_OHDEER	&(characters_tiles_data[60])
+#define S_BADOAK	&(characters_tiles_data[62])
+#define S_BADPINE	&(characters_tiles_data[64])
+#define S_GOBSTER	&(characters_tiles_data[66])
+#define S_APE		&(characters_tiles_data[68])
+#define S_SMILES	&(characters_tiles_data[70])
+#define S_FAE		&(characters_tiles_data[72])
+#define S_BADCOP	&(characters_tiles_data[74])
+#define S_ANGEL		&(characters_tiles_data[76])
+#define S_KING		&(characters_tiles_data[78])
 
 
 

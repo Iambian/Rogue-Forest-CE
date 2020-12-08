@@ -1,36 +1,21 @@
 outputs:
   - type: appvar
-    name: RoFoDAT0
+    name: RoFoDAT1
     directory: output
     source-format: c
     include-file: gfx_base.h
     palettes:
       - base_pal
-    converts:
-      - ui
-    
-  - type: appvar
-    name: RoFoDAT1
-    directory: output
-    source-format: c
-    include-file: gfx_dtiles.h
-    palettes:
       - dtiles_pal
-    converts:
-      - dtiles
-  
-  - type: appvar
-    name: RoFoDAT2
-    directory: output
-    source-format: c
-    include-file: gfx_ftiles.h
-    palettes:
       - ftiles_pal
     converts:
+      - ui
+      - title
+      - dtiles
       - ftiles
-
+      - ftiles_uncomp
   - type: appvar
-    name: RoFoDAT3
+    name: RoFoDAT2
     directory: output
     source-format: c
     include-file: gfx_charequtiles.h
@@ -58,6 +43,7 @@ palettes:
       - color: {index: 13, r: 16, g: 96, b: 0}       #entry 13 - forest green
       - color: {index: 14, r: 96, g: 96, b: 96}      #entry 14 - dark gray
       - color: {index: 15, r: 128, g: 0, b: 128}     #entry 15 - purple
+      
   - name: dtiles_pal
     fixed-entries:
       - color: {index: 0, r: 255, g: 0, b: 220}
@@ -73,6 +59,7 @@ palettes:
       - tiles/DL_wallA.png
       - tiles/DL_wallB.png
       - tiles/DL_wallC.png
+      
   - name: ftiles_pal
     fixed-entries:
       - color: {index: 0, r: 255, g: 0, b: 220}
@@ -83,6 +70,7 @@ palettes:
       - tiles/DL_floor4.png
       - tiles/floorstuff.png
       - tiles/food_kitems.png
+      
   - name: charequtiles_pal
     fixed-entries:
       - color: {index: 0, r: 255, g: 0, b: 220}
@@ -102,18 +90,25 @@ converts:
       - ui/digitbar_btm.png
       - ui/areagfx.png
       - ui/floorgfx.png
-      - ui/rofotitle.png
     tilesets:
       tile-width: 16
       tile-height: 16
       images:
         - tiles/player0.png
         - tiles/equipicons.png
+        
+  - name: title
+    palette: base_pal
+    palette-offset: 0
+    compress: zx7
+    images:
+      - ui/rofotitle.png
       
   - name: dtiles
     palette: dtiles_pal
     palette-offset: 16
     transparent-color-index: 0
+    compress: zx7 
     tilesets:
       tile-width: 16
       tile-height: 16
@@ -129,9 +124,11 @@ converts:
         - tiles/DL_wallA.png
         - tiles/DL_wallB.png
         - tiles/DL_wallC.png
+        
   - name: ftiles
     palette: ftiles_pal
     palette-offset: 64
+    compress: zx7
     tilesets:
       tile-width: 16
       tile-height: 16
@@ -140,8 +137,17 @@ converts:
         - tiles/DL_floor2.png
         - tiles/DL_floor3.png
         - tiles/DL_floor4.png
-        - tiles/floorstuff.png
+        
+  - name: ftiles_uncomp
+    palette: ftiles_pal
+    palette-offset: 128
+    tilesets: 
+      tile-width: 16
+      tile-height: 16
+      images:
         - tiles/food_kitems.png
+        - tiles/floorstuff.png
+        
   - name: charequtiles
     palette: charequtiles_pal
     palette-offset: 128
