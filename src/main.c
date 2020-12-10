@@ -60,7 +60,9 @@ int main(void) {
 	main_Init();	//Setup game
 	state = 0;
 	while (1) {
+		++stats.timer;
 		k = util_GetSK();
+		
 		if (GS_TITLE == state) {			//Displays full menu. Returns state change.
 			state = disp_Title(k);
 			
@@ -79,31 +81,19 @@ int main(void) {
 			break;
 			
 		} else 	if (GS_GAMEMODE == state) {	//Main game
-			if (k & kbit_Mode) state = GS_TITLE;
 			state = disp_Gamemode(k);
 			
 		} else if (GS_MENUMODE == state) {	//Menu mode
-		
 			state = disp_Menumode(k);
+			
 		} else state = GS_QUIT;				//Unhandled states immediately quits.
+		
 		gfx_SwapDraw();
 	}
 	main_Exit();	//Perform putaway
 	return 0;
 }
 
-
-
-void util_BufStr(char *s) {
-	strcat(stringbuf,s);
-}
-void util_BufChr(char c) {
-	char *s;
-	for (s = stringbuf; *s; ++s);
-	*s = c;
-	++s;
-	*s = 0;
-}
 
 /*	Returns bitfield corresponding to the bits in...
 	group7: dpad [0-3]
@@ -120,6 +110,17 @@ uint8_t util_GetSK(void) {
 	curkey = (key ^ prevkey) & key;
 	prevkey = key;
 	return curkey;
+}
+
+void util_BufStr(char *s) {
+	strcat(stringbuf,s);
+}
+void util_BufChr(char c) {
+	char *s;
+	for (s = stringbuf; *s; ++s);
+	*s = c;
+	++s;
+	*s = 0;
 }
 
 //If bit 7 of numzeroes set, then prepend '+' if num is nonnegative
@@ -151,7 +152,7 @@ void util_BufInt(int num, uint8_t numzeroes) {
 		s[i] = s[j];
 		s[j] = t;
 	}
-	strcat(stringbuf,s);
+	util_BufStr(s);
 }
 
 void util_BufTime(void) {
@@ -173,16 +174,25 @@ void util_BufTime(void) {
 	if ((cur_hour-=stats.start_hour)>24) {
 		cur_hour += 24;
 	}
-	gfx_PrintUInt(cur_hour,1);
-	gfx_PrintChar(':');
-	gfx_PrintUInt(cur_min,2);
-	if (cur_sec&1)	gfx_PrintChar(':');
-	else			gfx_PrintChar(' ');
-	gfx_PrintUInt(cur_sec,2);
-	
-	
+	util_BufClr();
+	util_BufInt(cur_hour,1);
+	util_BufChr(':');
+	util_BufInt(cur_min,2);
+	util_BufChr((cur_sec&1)?(':'):(' '));
+	util_BufInt(cur_sec,2);
 }
 
+void util_PrintF(void) {
+	int x;
+	uint8_t y;
+	char *s,c;
+	x = gfx_GetTextX();
+	s = stringbuf;
+	while ((c=(*s++))) {
+		if ('\n'==c)	gfx_SetTextXY(x,gfx_GetTextY()+8);
+		else			gfx_PrintChar(c);
+	}
+}
 
 
 
@@ -279,29 +289,20 @@ void main_Exit(void) {
 	gfx_End();
 }
 
-
-mobjdef_t pbase_fighter = {
-//	name field ,spriteobj ,scriptname 
-//	mhp,mmp,str,spd,smr,atk,def,blk,ref,snk,per,rwr,mdf,mat,fdf,fat,edf,eat,pdf,pat
-	{"Rawrs"   ,NULL      ,NULL,
-	 20,  6, 11, 12, 13,  1,  2,  3,  4,  5,  6,  7,  8,  9,  1,  2,  3,  4,  5,  6},
-};
-mobjdef_t pbase_mage = {
-//	name field ,spriteobj ,scriptname 
-//	mhp,mmp,str,spd,smr,atk,def,blk,ref,snk,per,rwr,mdf,mat,fdf,fat,edf,eat,pdf,pat
-	{"Rawrs"   ,NULL      ,NULL,
-	 20,  6, 11, 12, 13,  1,  2,  3,  4,  5,  6,  7,  8,  9,  1,  2,  3,  4,  5,  6},
-};
-
+//Class may be values 245-255, matching with MOB definitions
 void main_NewChar(uint8_t class) {
 	
+	//Init player inventories
+	memset(inventory,0,sizeof(inventory));
+	memset(equipment,0,sizeof(equipment));
+	memset(quickbar,0,sizeof(quickbar));
 	//Init player stats
-	pbase = pbase_fighter;
-	pcalc = pbase;
-	memset(&pmobj,0,sizeof(pmobj));
-	pmobj.type = 0xFF;
+	pmobj.type = 245;	//class goes here
 	pmobj.hp = pcalc.maxhp;
 	pmobj.mp = pcalc.maxmp;
+	memcpy(&pbase,mobj_GetDef(&pmobj),sizeof(pbase));
+	mobj_RecalcPlayer();
+	memset(&pmobj,0,sizeof(pmobj));
 	//Init persistent stats
 	memset(&stats,0,sizeof(stats));
 	stats.start_sec = rtc_Seconds;
@@ -312,16 +313,8 @@ void main_NewChar(uint8_t class) {
 	stats.food = stats.hifood = 20;
 	//Init player mobj
 	memset(&pmobj,0,sizeof(pmobj));
-	//Init player inventories
-	memset(inventory,0,sizeof(inventory));
-	memset(equipment,0,sizeof(equipment));
-	memset(quickbar,0,sizeof(quickbar));
 	//Init overworld (this also loads initial map state)
 	gen_Overworld();
-	
-	
-	
-	
 	
 }
 

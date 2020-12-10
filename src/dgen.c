@@ -11,7 +11,15 @@
 #include "gfx/output/gfx_base.h"
 #include "gfx/output/gfx_charequtiles.h"
 
+//---
 void gen_TestDungeon(uint8_t density, uint8_t floorid);
+//---
+void gen_AddDoors(uint8_t floorid);
+void gen_AddWarps(uint8_t floorid);
+floor_t *gen_FindFloor(uint8_t floorid);
+floor_t *gen_MakeFloor(uint8_t floorid);	//Also returns preexisting
+void gen_LoadTiles(uint8_t tilestart, void **compressed, uint8_t numtile);
+
 
 
 
@@ -37,7 +45,6 @@ void gen_WarpTo(uint8_t id) {
 	if (!dungeonid) {
 		//Load forest
 		gen_TestDungeon(80,id);
-		gen_AddDoors(id);
 		forestmap_seen[floorid-1] = 1;
 		stats.forestarea = floorid;
 		stats.dungeonid = 0;
@@ -102,6 +109,7 @@ void **gen_testdungeon_forests[] = {
 void gen_TestDungeon(uint8_t density, uint8_t floorid) {
 	uint8_t x,y,x2,y2,dx,dy,w,h,i,j,k;
 	int temp;
+	void *ptr;
 	floor_t *floor;
 	room_t *room,*room2;
 	
@@ -168,6 +176,25 @@ void gen_TestDungeon(uint8_t density, uint8_t floorid) {
 	gfx_SetPaletteEntry(dtiles_palette_offset,gfx_RGBTo1555(211,125,44)); //brown
 	gen_LoadTiles(floorAbase,DL_floor4_tiles_compressed,DL_floor1_tiles_num);
 	gfx_SetPaletteEntry(ftiles_palette_offset,gfx_RGBTo1555(211,125,44)); //brown
+	//Load other objects as needed
+	if (floor->sobj_count) {
+		//Load sobj and mobj data from file
+	} else {
+		gen_AddDoors(floorid);
+		gen_AddWarps(floorid);
+	}
+	
+	//Forest postprocessing. Should probably move this to its own function.
+	ptr = sobj_GetByDest(0x0D);	//Forest center
+	if (ptr) {
+		//Following logic only opens gate to cherry if you have all four gems
+		//AND NOTHING ELSE. As a consequence, the gate disables once you get
+		//the cherry.
+		if (stats.mcguffins^(KITEM_MCGUFF1|KITEM_MCGUFF2|KITEM_MCGUFF3|KITEM_MCGUFF4))
+			((sobj_t*)ptr)->data = SOBJ_WARPGATE;		//Not active
+		else
+			((sobj_t*)ptr)->data = SOBJ_WARPGATE|0x80;	//Active
+	}
 }
 
 
@@ -214,7 +241,74 @@ void gen_AddDoors(uint8_t floorid) {
 
 
 
-void gen_AddWarps(uint8_t floorid);
+void gen_AddWarps(uint8_t floorid) {
+	uint8_t x,y,i,warpmap,warpdest,warptype;
+	room_t *room;
+	sobj_t sobj;
+	
+	warpmap = 0x01;
+	while (warpmap & 0x0FF) {
+		warptype = warpdest = 0;
+		if (forestmap[floorid-1] & warpmap) {
+			warptype = SOBJ_WARPGATE|0x80; //Preactivated warpgates
+			switch (warpmap) {
+				case FEX_WEST:
+					warpdest = floorid-1;
+					break;
+				case FEX_EAST:
+					warpdest = floorid+1;
+					break;
+				case FEX_SOUTH:
+					warpdest = floorid+5;
+					break;
+				case FEX_NORTH:
+					warpdest = floorid-5;
+					break;
+				case FEX_EXIT:
+					warpdest = 0xFF;
+					warptype = SOBJ_WARPGATE2;
+					if (stats.mcguffins & KITEM_LCHERRY) warptype |= 0x80;
+					break;
+				case FEX_DUNGEON:
+					for (i=0;(i<6)||(dungeonmap[i]==floorid);++i);
+					warpdest = i<<5+1;
+					warptype = SOBJ_STAIRSDOWN;
+					break;
+				case FEX_FLOORUP:
+					warptype = SOBJ_STAIRSUP;
+					warpdest = floorid-1;	//id&LO==0 if exiting to forest
+					break;
+				case FEX_FLOORDOWN:
+					warptype = SOBJ_STAIRSDOWN;
+					warpdest = floorid+1;
+					break;
+				default:
+					warptype = SOBJ_WARPHIDDEN;
+					warpdest = 0;	//Impossible for this to reach.
+					break;			//Still... set invalid floor.
+			} 
+		}
+		if (warpdest) {
+			while (1) {
+				room = &roomtable[randInt(0,roomcount-1)];
+				x = randInt(room->x+1,room->x+room->w-2);
+				y = randInt(room->y+1,room->y+room->h-2);
+				//Rooms should never be so full as to lock this up.
+				//If it is, you should generate fewer things.
+				if (sobj_GetByPos(x,y)) continue;
+				//Disable warp to the cherry if you do not own
+				//all four mcguffins... erh. gems... of power.
+				sobj.type = warptype;
+				sobj.x = x;
+				sobj.y = y;
+				sobj.data = warpdest;
+				sobj_Add(&sobj);
+				break;
+			}
+		}
+		warpmap <<= 1;
+	}
+}
 
 
 

@@ -15,6 +15,61 @@
 mobj_t emptymobj;
 sobj_t emptysobj;
 
+void mobj_basicmove(mobj_t *mobj);
+void mobj_zoomove(mobj_t *mobj);
+
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+mobjdef_t playerdef[] = {
+//	name field ,spriteobj ,scriptname 
+//	mhp,mmp,str,spd,smr,atk,def,blk,ref,snk,per,rwr,mdf,mat,fdf,fat,edf,eat,pdf,pat
+	{"Rawrs"   ,S_PLAYER0 ,NULL,
+	 20,  6, 11, 12, 13,  1,  2,  3,  4,  5,  6,  7,  8,  9,  1,  2,  3,  4,  5,  6},
+	{"Rawrs"   ,S_PLAYER0 ,NULL,
+	 20,  6, 11, 12, 13,  1,  2,  3,  4,  5,  6,  7,  8,  9,  1,  2,  3,  4,  5,  6},
+};
+
+mobjdef_t enemydef[] = {
+//	name field ,spriteobj ,scriptname 
+//	mhp,mmp,str,spd,smr,atk,def,blk,ref,snk,per,rwr,mdf,mat,fdf,fat,edf,eat,pdf,pat
+	{"NULL"    ,S_NULL    ,mobj_zoomove,
+	 1,   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1},
+	{"Rat"     ,S_NORMRAT ,mobj_zoomove,
+	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
+	{"Dire Rat",S_DIRERAT ,mobj_zoomove,
+	 20,  0,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
+	{"Squirrel",S_SQUIRREL,mobj_zoomove,
+	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
+	{"Snake"   ,S_SNAKE,   mobj_zoomove,
+	 10,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
+	
+};
+
+uint8_t mobj_tilepassable[] = {
+//	0	1	2	3	4	5	6	7	8	9	A	B	C	D	E	F	
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//00
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//10
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//20
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//30
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//40
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//50
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//60
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//70
+	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1,	//80 traps and open doors
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//90
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//A0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//B0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//C0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//D0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//E0
+	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	//F0
+};
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+
 void sobj_Add(sobj_t *sobj) {
 	if (sobjcount>250) return;
 	memcpy(&sobjtable[sobjcount++],sobj,sizeof(sobj_t));
@@ -102,9 +157,10 @@ void sobj_WriteToMap(void) {
 	sobj_t *s;
 	
 	for (i=0,s=sobjtable; i< sobjcount; ++i,++s) {
-		ty  = s->type;
-		tyh = ty & SOBJTMSKHI;
-		tyf = s->type & ~(SOBJTMSKLO|SOBJTMSKHI);
+		ty  = s->type;								//Type in temp
+		tyh = ty & SOBJTMSKHI;						//Get only type bits
+		tyf = s->type & ~(SOBJTMSKLO|SOBJTMSKHI);	//Get only activate bit
+		ty  = ty & 0x7F;							//Strip activate from rest
 		t = 0;
 		/* DOORS */
 		if (tyh == SOBJ_DOORBASE) {
@@ -178,6 +234,126 @@ void sobj_WriteToMap(void) {
 	}
 }
 
+mobjdef_t *mobj_GetDef(mobj_t *mobj) {
+	uint8_t i,t;
+	
+	t = mobj->type;
+	if (t < MOB_PLAYER0) {
+		if (t >= (sizeof(enemydef)/sizeof(mobjdef_t))) t = 0;
+		return &enemydef[t];
+	} else {
+		t -= MOB_PLAYER0;
+		if (t >= (sizeof(playerdef)/sizeof(mobjdef_t))) t = 0;
+		return &playerdef[t];
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+void mobj_RecalcPlayer(void) {
+	uint8_t i,j,offset;
+	int t,enchantval;
+	itemdef_t *item;
+	item_t *gear;
+	
+	/*
+	playercalc = playerbase;
+	return;	//Okay maybe memory is getting corrupted someplace
+	for (i = 0; i<8; ++i) {
+		if (equipment[i].type) {
+			gear = &equipment[i];
+			item = items_GetItemDef(gear);
+			offset = item->offset1;
+			t = item->modifier1;
+			dbg_sprintf(dbgout,"Iter %i, type %i, offset %i, mod %i\n",i,equipment[i].type,offset,t);
+			if (t) {
+				*(((uint8_t*)&playercalc)+offset) += t + ((item->enchantmult * gear->data * t)>>8);
+			}
+			offset = item->offset2;
+			t = item->modifier2;
+			if (t) {
+				*(((uint8_t*)&playercalc)+offset) += t + ((item->enchantmult * gear->data * t)>>8);
+			}
+		}
+	}
+	*/
+}
+
+
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~ Mobile Object Movement Routines ~~~~~~~~~~~~~~~~~~ */
+
+void mobj_pushmove(mobj_t* mobj, uint8_t newx, uint8_t newy) {
+	int x,y;
+	moving_t *m;
+	
+	m = &movingtable[movingcount];
+	++movingcount;
+	m->mobj = mobj;
+	m->startx = mobj->x*16;
+	m->starty = mobj->y*16;
+	m->endx = newx*16;
+	m->endy = newy*16;
+	mobj->x = newx;
+	mobj->y = newy;
+}
+
+uint8_t mobj_trymove(mobj_t *mobj, int8_t dx, int8_t dy) {
+	uint8_t cx,cy,t;
+	cx = mobj->x + dx;
+	cy = mobj->y + dy;
+	t = curmap->data[cy*128+cx];
+	return mobj_tilepassable[t];
+}
+//Only move if player is within 10 squares of enemy
+void mobj_basicmove(mobj_t *mobj) {
+	int8_t dx,dy;
+	uint8_t nx,ny;
+	
+	nx = mobj->x;
+	ny = mobj->y;
+	dx = pmobj.x-nx;
+	dy = pmobj.y-ny;
+	mobj->flags &= ~MSTAT_ISMOVING;
+	if ((abs(dx) < 10) && (abs(dy) < 10)) {
+		dx = ((dx>0)?1:-1);
+		dy = ((dy>0)?1:-1);
+		if (mobj_trymove(mobj,dx,0)) nx = nx+dx;
+		if (mobj_trymove(mobj,0,dy)) ny = ny+dy;
+		if ((nx != mobj->x) && (ny != mobj->y)) {
+			mobj_pushmove(mobj,nx,ny);
+			mobj->flags |= MSTAT_ISMOVING;
+		}
+	}
+}
+
+void mobj_zoomove(mobj_t *mobj) {
+	int8_t dx,dy;
+	uint8_t nx,ny;
+	
+	mobj->flags &= ~MSTAT_ISMOVING;
+	//if (randInt(0,10)>2) return;	//A sedate pace
+	nx = mobj->x;
+	ny = mobj->y;
+	dx = randInt(-1,1);
+	dy = randInt(-1,1);
+	if (mobj_trymove(mobj,dx,0)) nx = nx+dx;
+	if (mobj_trymove(mobj,0,dy)) ny = ny+dy;
+	if ((nx != mobj->x) && (ny != mobj->y)) {
+		mobj_pushmove(mobj,nx,ny);
+		mobj->flags |= MSTAT_ISMOVING;
+	}
+}
 
 
 

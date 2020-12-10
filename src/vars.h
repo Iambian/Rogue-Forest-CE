@@ -100,6 +100,7 @@ void 	asm_DrawTitleHead(gfx_sprite_t* sprite);
 /* Shared functions defined in objs.c */
 #define sobj_Clear() sobjcount = 0;
 #define mobj_Clear() mobjcount = 0;
+#define moving_Clear() movingcount = 0;
 void sobj_Add(sobj_t *sobj);
 void mobj_Add(mobj_t *mobj);
 void sobj_Del(sobj_t *sobj);
@@ -109,12 +110,14 @@ mobj_t *mobj_GetByPos(uint8_t x, uint8_t y);
 sobj_t *sobj_GetByDest(uint8_t warpid);
 uint8_t sobj_IsDoorable(uint8_t x, uint8_t y);
 void sobj_WriteToMap(void);
+mobjdef_t *mobj_GetDef(mobj_t *mobj);
+void mobj_RecalcPlayer(void);
 
 
 
 
 
-
+/* Shared functions and variables in items.c */
 
 
 
@@ -123,11 +126,6 @@ void gen_WarpTo(uint8_t id);
 void gen_Overworld(void);
 
 //Moveto dgen.c when finished with transcription
-void gen_AddDoors(uint8_t floorid);
-void gen_AddWarps(uint8_t floorid);
-floor_t *gen_FindFloor(uint8_t floorid);
-floor_t *gen_MakeFloor(uint8_t floorid);	//Also returns preexisting
-void gen_LoadTiles(uint8_t tilestart, void **compressed, uint8_t numtile);
 
 
 
@@ -164,13 +162,14 @@ extern uint8_t mobjcount,sobjcount,roomcount,floorcount,movingcount;
 extern mobj_t pmobj;
 extern mobjdef_t pbase,pcalc;
 
+uint8_t util_GetSK(void);
 #define util_BufClr() stringbuf[0] = 0;
 #define util_BufSet(s) util_BufClr(); util_BufStr(%%s%%);
 void	util_BufStr(char *s);
 void	util_BufChr(char c);
-uint8_t util_GetSK(void);
 void	util_BufInt(int num, uint8_t numzeroes);
-
+void	util_BufTime(void);
+void	util_PrintF(void);
 
 
 

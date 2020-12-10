@@ -184,6 +184,15 @@ void disp_Sidebar(uint8_t update) {
 
 
 /* =========================================================================== */
+
+uint8_t disp_clampcoord(uint8_t coord) {
+	uint8_t c;
+	c = coord-7;
+	if (c>230) return 0;
+	if (c>113) return 113;
+	return c;
+}
+
 uint8_t disp_Gamemode(uint8_t key) {
 	uint8_t u,i,j,k,x,y,tx,ty;
 	int cx,cy,px,py,ex,ey;
@@ -211,12 +220,16 @@ uint8_t disp_Gamemode(uint8_t key) {
 	// direction handly stuff
 	//
 	
+	
+	cx = disp_clampcoord(pmobj.x) * 16;
+	cy = disp_clampcoord(pmobj.y) * 16;
+	
 	//BEGIN TESTING
 	x = tx;
 	y = ty;
 	//END TESTING
 	
-	gfx_Tilemap(&tilemap,16*x,16*y);
+	gfx_Tilemap(&tilemap,cx,cy);
 	
 	pmobj.x = x;
 	pmobj.y = y;

@@ -3,6 +3,7 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ start ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #define VERSION "0.02"
 #define gfx_SetPaletteEntry(offset,color1555) ((uint16_t*)0xE30200)[offset] = color1555;
+#define abs(x) ((x<0)?(-x):x)
 /* ------------------------------ Colors -------------------------- */
 #define COLOR_BLACK				0
 #define COLOR_WHITE				1
@@ -38,6 +39,7 @@
 #define GS_GAMEMODE	32
 #define GS_MENUMODE	64
 /* ----------------------- Enemy Sprite Redefs -------------------- */
+#define S_NULL		&(tiles[0])
 #define S_NORMRAT	&(characters_tiles_data[0])
 #define S_DIRERAT	&(characters_tiles_data[2])
 #define S_SQUIRREL	&(characters_tiles_data[4])
@@ -78,6 +80,60 @@
 #define S_BADCOP	&(characters_tiles_data[74])
 #define S_ANGEL		&(characters_tiles_data[76])
 #define S_KING		&(characters_tiles_data[78])
+#define S_PLAYER0	&(player0_tiles_data[0])
+/* ------------------- Mobile Object Definitions ------------------ */
+#define MOB_NORMRAT		1
+#define MOB_DIRERAT		2
+#define MOB_SQUIRREL	3
+#define MOB_SNAKE		4
+#define MOB_LIZARD		5
+#define MOB_TURTLE		6
+#define MOB_LIZMAN		7
+#define MOB_HIDDEN		8
+#define MOB_ASP			9
+#define MOB_HYDRA		10
+#define MOB_WISP		11
+#define MOB_BEAN		12
+#define MOB_SKEL		13
+#define MOB_ZOMBIE		14
+#define MOB_ZOMBONE		15
+#define MOB_REAPER		16
+#define MOB_NECRO		17
+#define MOB_SHADE		18
+#define MOB_SCORPION	19
+#define MOB_LADYBUG		20
+#define MOB_SHARK		21
+#define MOB_FISH		22
+#define MOB_BAT			23
+#define MOB_SWAN		24
+#define MOB_PARROT		25
+#define MOB_CHICKEN		26
+#define MOB_DOGGO		27
+#define MOB_DOGMAN		28
+#define MOB_LIGHTS		29
+#define MOB_DARKS		30
+#define MOB_OHDEER		31
+#define MOB_BADOAK		32
+#define MOB_BADPINE		33
+#define MOB_GOBSTER		34
+#define MOB_APE			35
+#define MOB_SMILES		36
+#define MOB_FAE			37
+#define MOB_BADCOP		38
+#define MOB_ANGEL		39
+#define MOB_KING		40
+//Up to ten classes. Seems like overkill.
+#define MOB_PLAYER0		245
+#define MOB_PLAYER1		246
+/* ------------------- Mobile Object State Flags ------------------ */
+#define MSTAT_SPOTTED	(1<<0)
+#define MSTAT_ISMOVING  (1<<1)
+#define MSTAT_RESERVED2 (1<<2)
+#define MSTAT_RESERVED3 (1<<3)
+#define MSTAT_RESERVED4 (1<<4)
+#define MSTAT_RESERVED5 (1<<5)
+#define MSTAT_RESERVED6 (1<<6)
+#define MSTAT_RESERVED7 (1<<7)
 /* ----------------------- Sidebar Update Flags ------------------- */
 #define UPD_XP			(1<<0)
 #define UPD_FOOD		(1<<1)
@@ -182,6 +238,7 @@
 #define EQU_LONGBOW			62
 #define EQU_SLING			63
 #define EQU_HANDRIFLE		64
+#define EQU_EQUIPPABLE_END	65
 #define ITEM_CONSUMABLE 192
 #define CONS_BLINK			192
 #define CONS_CHAINLIGHTNING	193
@@ -207,11 +264,13 @@
 #define CONS_UNUSEDWAND6	213
 #define CONS_UNUSEDWAND7	214
 #define CONS_UNUSEDWAND8	215
+#define CONS_CONSUMABLE_END	216
 #define KITEM_MCGUFF1		(1<<0)
 #define KITEM_MCGUFF2		(1<<1)
 #define KITEM_MCGUFF3		(1<<2)
 #define KITEM_MCGUFF4		(1<<3)
 #define KITEM_LCHERRY		(1<<4)
+//Do not add any more mcguffins or cherry gate will break
 /* ---------------------- Static object defines ------------------- */
 #define SOBJTMSKLO 0x07
 #define SOBJTMSKHI 0x78
