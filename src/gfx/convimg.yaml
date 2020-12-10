@@ -140,7 +140,7 @@ converts:
         
   - name: ftiles_uncomp
     palette: ftiles_pal
-    palette-offset: 128
+    palette-offset: 64
     tilesets: 
       tile-width: 16
       tile-height: 16

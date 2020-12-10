@@ -122,7 +122,7 @@ loadminimap_subloop:
                               ld    e,(ix+3)
                               ld    d,(ix-8)
                               call  loadminimap_clamp
-                              add   a,37
+                              add   a,39
                               ld    c,a
                               push  bc
                                     ld    e,(ix+0)
@@ -140,9 +140,7 @@ loadminimap_subloop:
             pop   bc
       pop   ix
       ret
-            
-            
-            
+      
 loadminimap_clamp:
       ld    a,e
       ;srl   a
@@ -155,6 +153,8 @@ loadminimap_clamp:
       jr    c,$+4
       ld    a,63-14
       ret
+      
+      
             
 ;0xFF = path
 ;Everything else = wall

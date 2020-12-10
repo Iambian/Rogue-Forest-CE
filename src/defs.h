@@ -29,15 +29,6 @@
 #define kbit_2nd		(1<<5)
 #define kbit_Mode		(1<<6)
 #define kbit_Del		(1<<7)
-/* ------------------------------- Tiles -------------------------- */
-#define wallAbase	( 0+(0*18))
-#define wallBbase	( 0+(1*18))
-#define wallCbase	( 0+(2*18))
-#define floorAbase	(64+(0*21))
-#define floorBbase	(64+(1*21))
-#define floorCbase	(64+(2*21))
-#define floortilebase	(128)
-#define kitembase	(128+64)
 /* --------------------------- Game State ------------------------- */
 #define GS_TITLE	0
 #define GS_NEWGAME	(GS_TITLE+1)
@@ -45,6 +36,7 @@
 #define GS_CREDITS	(GS_TITLE+3)
 #define GS_QUIT		(GS_TITLE+4)
 #define GS_GAMEMODE	32
+#define GS_MENUMODE	64
 /* ----------------------- Enemy Sprite Redefs -------------------- */
 #define S_NORMRAT	&(characters_tiles_data[0])
 #define S_DIRERAT	&(characters_tiles_data[2])
@@ -86,13 +78,236 @@
 #define S_BADCOP	&(characters_tiles_data[74])
 #define S_ANGEL		&(characters_tiles_data[76])
 #define S_KING		&(characters_tiles_data[78])
+/* ----------------------- Sidebar Update Flags ------------------- */
+#define UPD_XP			(1<<0)
+#define UPD_FOOD		(1<<1)
+#define UPD_MINI		(1<<2)
+#define UPD_HP			(1<<3)
+#define UPD_MP			(1<<4)
+#define UPD_CURGEAR		(1<<5)
+#define UPD_QUICKSET	(1<<6)
+#define UPD_BACKERS		(1<<7)
+#define UPD_SIDEBAR		0xFF
+/* -------------------- Dungeon generator defines ----------------- */
+#define NUMROOMS_MAX 30
+#define AREAHIMASK 0xE0
+#define AREALOMASK 0x1F
+#define AREAHICONV(x) ((x&0x07)<<5)
+#define AREAHIUNCONV(x) ((x>>5)&0x07)
+#define AREA_FOREST AREAHICONV(0)
+#define AREA_DUNGEON1 AREAHICONV(1)
+#define AREA_DUNGEON2 AREAHICONV(2)
+#define AREA_DUNGEON3 AREAHICONV(3)
+#define AREA_DUNGEON4 AREAHICONV(4)
+#define AREA_DUNGEON5 AREAHICONV(5)
+#define FEX_WEST      (1<<0)
+#define FEX_EAST      (1<<1)
+#define FEX_SOUTH     (1<<2)
+#define FEX_NORTH     (1<<3)
+#define FEX_EXIT      (1<<4)
+#define FEX_DUNGEON   (1<<5)
+#define FEX_FLOORUP   (1<<6)
+#define FEX_FLOORDOWN (1<<7)
+/* -------------------------- Item type defines ------------------- */
+#define EFL_RNG (1<<0)
+#define EFL_HAT (1<<1)
+#define EFL_ARM (1<<2)
+#define EFL_GLO (1<<3)
+#define EFL_WPN (1<<4)
+#define EFL_BTS (1<<5)
+#define EFL_2ND (1<<6)
+#define EFL_MSC (1<<7)
+#define ITEM_EQUIPPABLE	1
+#define EQU_ROBE			1
+#define EQU_LEATHERARMOR	2
+#define EQU_METALARMOR		3
+#define EQU_REFLECTARMOR	4
+#define EQU_INTPENDANT		5
+#define EQU_STRPENDANT		6
+#define EQU_AGIPENDANT		7
+#define EQU_MPPENDANT		8
+#define EQU_HPPENDANT		9
+#define EQU_DEFPENDANT		10
+#define EQU_REFLECTPENDANT	11
+#define EQU_ALLMIGHTPENDANT	12
+#define EQU_MDEFRING		13
+#define EQU_ELECDEFRING		14
+#define EQU_FIREDEFRING		15
+#define EQU_POISONDEFRING	16
+#define EQU_STRRING			17
+#define EQU_DEFRING			18
+#define EQU_MPRING			19
+#define EQU_SNEAKRING		20
+#define EQU_ATKRING			21
+#define EQU_MAGRING			22
+#define EQU_HPRING			23
+#define EQU_RAWRSRING		24
+#define EQU_REFLECTRING		25
+#define EQU_UNUSEDRING1		26
+#define EQU_UNUSEDRING2		27
+#define EQU_WALLRING		28
+#define EQU_SHOES			29
+#define EQU_BOOTS			30
+#define EQU_METALBOOTS		31
+#define EQU_NINJABOOTS		32
+#define EQU_LEATHERCAP		33
+#define EQU_HAT				34
+#define EQU_METALHAT		35
+#define EQU_REFLECTHAT		36
+#define EQU_THIEFGLOVE		37
+#define EQU_LEATHERGLOVE	38
+#define EQU_BATTLEMITTS		39
+#define EQU_BADTOUCHER		40
+#define EQU_BUCKLER			41
+#define EQU_SMALLSHIELD		42
+#define EQU_TOWERSHIELD		43
+#define EQU_REFLECTSHIELD	44
+#define EQU_MAGICMISSILE	45
+#define EQU_LIGHTNING		46
+#define EQU_FIREBALL		47
+#define EQU_POISONBOLT		48
+#define EQU_SHORTSWORD		49
+#define EQU_LONGSWORD		50
+#define EQU_BUSTERSWORD		51
+#define EQU_SHADOWSWORD		52
+#define EQU_MININGPICK		53
+#define EQU_LONGAXE			54
+#define EQU_HALBERD			55
+#define EQU_SPEAR			56
+#define EQU_SAFTEYGOGGLES	57
+#define EQU_PRAYERBEADS		58
+#define EQU_CRYSTALBALL		59
+#define EQU_ESCAPEROPE		60
+#define EQU_SHORTBOW		61
+#define EQU_LONGBOW			62
+#define EQU_SLING			63
+#define EQU_HANDRIFLE		64
+#define ITEM_CONSUMABLE 192
+#define CONS_BLINK			192
+#define CONS_CHAINLIGHTNING	193
+#define CONS_HELLFIRE		194
+#define CONS_ACQUIREMENT	195
+#define CONS_HEALTH			196
+#define CONS_MANA			197
+#define CONS_EXPERIENCE		198
+#define CONS_REGENERATION	199
+#define CONS_FARSIGHT		200
+#define CONS_BLOODTHIRST	201
+#define CONS_IRONHIDE		202
+#define CONS_LOUDERRAWRS	203
+#define CONS_UNUSEDPOTION1	204
+#define CONS_UNUSEDPOTION2	205
+#define CONS_UNUSEDPOTION3	206
+#define CONS_UNUSEDPOTION4	207
+#define CONS_UNUSEDWAND1	208
+#define CONS_UNUSEDWAND2	209
+#define CONS_UNUSEDWAND3	210
+#define CONS_UNUSEDWAND4	211
+#define CONS_UNUSEDWAND5	212
+#define CONS_UNUSEDWAND6	213
+#define CONS_UNUSEDWAND7	214
+#define CONS_UNUSEDWAND8	215
+#define KITEM_MCGUFF1		(1<<0)
+#define KITEM_MCGUFF2		(1<<1)
+#define KITEM_MCGUFF3		(1<<2)
+#define KITEM_MCGUFF4		(1<<3)
+#define KITEM_LCHERRY		(1<<4)
+/* ---------------------- Static object defines ------------------- */
+#define SOBJTMSKLO 0x07
+#define SOBJTMSKHI 0x78
+#define SOBJTYPECAT(x) (x<<3)
+#define SOBJ_DOORBASE SOBJTYPECAT(0)
+#define SOBJ_DOOR		SOBJ_DOORBASE+0
+#define SOBJ_LOCKDOOR	SOBJ_DOORBASE+1
+#define SOBJ_MLOKDOOR	SOBJ_DOORBASE+2
+#define SOBJ_TIMEDOOR	SOBJ_DOORBASE+3
+#define SOBJ_BOSSDOOR	SOBJ_DOORBASE+4
+#define SOBJ_SW1DOOR	SOBJ_DOORBASE+5
+#define SOBJ_SW2DOOR	SOBJ_DOORBASE+6
+#define SOBJ_SW3DOOR	SOBJ_DOORBASE+7
+#define SOBJ_WARPBASE SOBJTYPECAT(1)
+#define SOBJ_WARPHIDDEN	SOBJ_WARPBASE+0
+#define SOBJ_WARPGATE	SOBJ_WARPBASE+1
+#define SOBJ_WARPPAD	SOBJ_WARPBASE+2
+#define SOBJ_WARPGATE2	SOBJ_WARPBASE+3
+#define SOBJ_STAIRSUP	SOBJ_WARPBASE+4
+#define SOBJ_STAIRSDOWN	SOBJ_WARPBASE+5
+#define SOBJ_TRAPBASE SOBJTYPECAT(2)
+#define SOBJ_TRAPSPIKES	SOBJ_TRAPBASE+0
+#define SOBJ_TRAPSTICKS	SOBJ_TRAPBASE+1
+#define SOBJ_TELEPORTER	SOBJ_TRAPBASE+2
+#define SOBJ_TRAPPIT	SOBJ_TRAPBASE+3
+#define SOBJ_CHESTBASE SOBJTYPECAT(3)
+#define SOBJ_NORMCHEST	SOBJ_CHESTBASE+0
+#define SOBJ_LOCKCHEST	SOBJ_CHESTBASE+1
+#define SOBJ_MLOKCHEST	SOBJ_CHESTBASE+2
+#define SOBJ_CRYSCHEST	SOBJ_CHESTBASE+3
+#define SOBJ_FAKECHEST	SOBJ_CHESTBASE+4
+#define SOBJ_ITEMBASE SOBJTYPECAT(4)
+#define SOBJ_MONEY		SOBJ_ITEMBASE+0
+#define SOBJ_OPTIONALS	SOBJ_ITEMBASE+1
+#define SOBJ_MCGUFFIN	SOBJ_ITEMBASE+2
+#define SOBJ_HIDDENKITM	SOBJ_ITEMBASE+3
+#define SOBJ_FOOD		SOBJ_ITEMBASE+4
+#define SOBJ_MOARFOOD	SOBJ_ITEMBASE+5
+#define SOBJ_CHERRY		SOBJ_ITEMBASE+6
 
-
-
-
-
-
-
+/* ------------- Tile mapping and tile identity defines ----------- */
+#define wallAbase	( 0+(0*18))
+#define wallBbase	( 0+(1*18))
+#define wallCbase	( 0+(2*18))
+#define floorAbase	(64+(0*21))
+#define floorBbase	(64+(1*21))
+#define floorCbase	(64+(2*21))
+#define FLOORBASE 		0x80
+#define floortilebase	0x80
+//Offset+1 = trap activated
+#define TILE_TRAP1	(FLOORBASE+0)
+#define TILE_TRAP2	(FLOORBASE+2)
+#define TILE_TRAP3	(FLOORBASE+4)
+#define TILE_TRAP4	(FLOORBASE+6)
+#define TILE_TRAP5	(FLOORBASE+8)
+#define TILE_TRAP6	(FLOORBASE+10)
+#define TILE_TRAP7	(FLOORBASE+12)
+//Offset+1 = door embedded in a vertical wall (side-view)
+#define TILE_DOOROPEN	(FLOORBASE+14)
+#define TILE_DOORCLOSED	(FLOORBASE+16)
+#define TILE_DOORLOCKED	(FLOORBASE+18)
+#define TILE_DOORSEALED	(FLOORBASE+20)
+//Offset+0 = portal disabled, Offsets +1 and +2 = portal active animation frames
+#define TILE_PORTAL1	(FLOORBASE+22)
+#define TILE_PORTAL2	(FLOORBASE+25)
+#define TILE_STAIRSUP	(FLOORBASE+28)
+#define TILE_STAIRSDOWN	(FLOORBASE+29)
+#define TILE_STAIRSBIGUP	(FLOORBASE+30)
+#define TILE_STAIRSBIGDOWN	(FLOORBASE+31)
+//Offset+0 = chest closed, +1 = opened
+#define TILE_TREASURECHEST	(FLOORBASE+32)
+#define TILE_TREASURELOCKED	(FLOORBASE+34)
+#define TILE_TREASURESEALED	(FLOORBASE+36)
+#define TILE_CRYSTALTREASURE	(FLOORBASE+38)
+//Misc
+#define TILE_MONEYBIG		(FLOORBASE+40)
+#define TILE_MONEYMED		(FLOORBASE+41)
+#define TILE_MONEYSMOL		(FLOORBASE+42)
+#define TILE_KEY			(FLOORBASE+43)
+#define TILE_MASTERKEY		(FLOORBASE+44)
+#define TILE_LAMP			(FLOORBASE+45)
+#define TILE_KEYCARD		(FLOORBASE+46)
+#define TILE_CANDLES		(FLOORBASE+47)
+//------------
+#define KITEMBASE 0xC0
+#define kitembase (128+64)
+//Key items and foods. All with animations are +1 offset.
+#define TILE_MCGUFFIN1 (KITEMBASE+0)
+#define TILE_MCGUFFIN2 (KITEMBASE+2)
+#define TILE_MCGUFFIN3 (KITEMBASE+4)
+#define TILE_MCGUFFIN4 (KITEMBASE+6)
+#define TILE_SMOLFOOD  (KITEMBASE+8)
+#define TILE_MOREFOOD  (KITEMBASE+9)
+#define TILE_BIGFOOD   (KITEMBASE+10)
+#define TILE_ISSAFEAST (KITEMBASE+11)
+#define TILE_LCHERRY   (KITEMBASE+12)
 
 
 

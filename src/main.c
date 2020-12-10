@@ -14,17 +14,40 @@
 
 
 /* Global variables and stuff */
-uint8_t rawkey;
 gfx_sprite_t *tiles[256];
 gfx_sprite_t *emptysprite;
 gfx_sprite_t *curmap;
 gfx_tilemap_t tilemap;
+stats_t stats;
+char stringbuf[100];
+uint8_t tile2color[513];
+item_t inventory[40];
+item_t equipment[8];
+item_t quickbar[10];
+mobj_t mobjtable[254];
+sobj_t sobjtable[254];
+room_t roomtable[100];
+floor_t floortable[254];
+moving_t movingtable[254];
+uint8_t forestmap_seen[25];
+uint8_t forestmap[25];
+uint8_t dungeonmap[6];
+
+
+uint8_t mobjcount,sobjcount,roomcount,floorcount,movingcount;
+mobj_t pmobj;
+mobjdef_t pbase,pcalc;
+int maxleveltable[] = {
+	20,		40,		60,		80,		120,	200,	300,	450,	800,	1200,
+	1800,	3000,	4500,	7000,	9200,	13000,	18000,	25000,	34000,	60000
+};
 
 
 
 /* Function prototypes */
 void main_Init(void);
 void main_Exit(void);
+void main_NewChar(uint8_t class);
 void main_Err(uint8_t filenum);
 void *util_InitNewSprite(void);
 
@@ -38,25 +61,49 @@ int main(void) {
 	state = 0;
 	while (1) {
 		k = util_GetSK();
-		if (GS_TITLE == state) {
+		if (GS_TITLE == state) {			//Displays full menu. Returns state change.
 			state = disp_Title(k);
-		} else if (GS_NEWGAME == state) {
+			
+		} else if (GS_NEWGAME == state) {	//TODO: Add class menu with hiscores.
+			main_NewChar(0);
+			disp_Sidebar(UPD_SIDEBAR);
 			state = GS_GAMEMODE;
-		} else if (GS_LOADGAME == state) {
+			
+		} else if (GS_LOADGAME == state) {	//TODO: Add file access and loader.
 			state = GS_TITLE;
-		} else if (GS_CREDITS == state) {
+			
+		} else if (GS_CREDITS == state) {	//Displays credits until anykey pushed.
 			state = disp_Credits(k);
-		} else if (GS_QUIT == state) {
+			
+		} else if (GS_QUIT == state) {		//Quits the game.
 			break;
-		} else if (GS_GAMEMODE == state) {
-			break;
-		} else state = GS_QUIT;
+			
+		} else 	if (GS_GAMEMODE == state) {	//Main game
+			if (k & kbit_Mode) state = GS_TITLE;
+			state = disp_Gamemode(k);
+			
+		} else if (GS_MENUMODE == state) {	//Menu mode
+		
+			state = disp_Menumode(k);
+		} else state = GS_QUIT;				//Unhandled states immediately quits.
 		gfx_SwapDraw();
 	}
 	main_Exit();	//Perform putaway
 	return 0;
 }
 
+
+
+void util_BufStr(char *s) {
+	strcat(stringbuf,s);
+}
+void util_BufChr(char c) {
+	char *s;
+	for (s = stringbuf; *s; ++s);
+	*s = c;
+	++s;
+	*s = 0;
+}
 
 /*	Returns bitfield corresponding to the bits in...
 	group7: dpad [0-3]
@@ -74,6 +121,76 @@ uint8_t util_GetSK(void) {
 	prevkey = key;
 	return curkey;
 }
+
+//If bit 7 of numzeroes set, then prepend '+' if num is nonnegative
+void util_BufInt(int num, uint8_t numzeroes) {
+	uint8_t slen,neg,i,j,t;
+	char s[20]; 
+	
+	neg = 0;
+	if (num<0) {
+		neg = 1;
+		num = -num;
+	}
+	
+	for (i=0; num; num/=10,++i) s[i] = (num % 10) + '0';
+	for ( ; i < (numzeroes&0x07); ++i) s[i] = '0';
+	
+	if (neg) {
+		s[i] = '-';
+		++i;
+	} else if (numzeroes & 0x80) {
+		s[i] = '+';
+		++i;
+	}
+	s[i] = 0;
+	slen = strlen(s)/2;
+	//dbg_sprintf(dbgout,"Values: %i,%i,%i,%i\n",num,neg,slen,i);
+	for (j=0,--i; j<slen; ++j,--i) {
+		t = s[i];
+		s[i] = s[j];
+		s[j] = t;
+	}
+	strcat(stringbuf,s);
+}
+
+void util_BufTime(void) {
+	uint8_t cur_sec,cur_min,cur_hour;
+	
+	cur_hour = rtc_Hours;
+	cur_min = rtc_Minutes;
+	cur_sec = rtc_Seconds;
+	
+	//timedelta: now - start -> delta
+	if ((cur_sec-=stats.start_sec)>60) {
+		cur_sec += 60;
+		cur_min -= 1;
+	}
+	if ((cur_min-=stats.start_min)>60) {
+		cur_min += 60;
+		cur_hour -= 1;
+	}
+	if ((cur_hour-=stats.start_hour)>24) {
+		cur_hour += 24;
+	}
+	gfx_PrintUInt(cur_hour,1);
+	gfx_PrintChar(':');
+	gfx_PrintUInt(cur_min,2);
+	if (cur_sec&1)	gfx_PrintChar(':');
+	else			gfx_PrintChar(' ');
+	gfx_PrintUInt(cur_sec,2);
+	
+	
+}
+
+
+
+
+
+
+
+
+
 
 /* --------------------------------------------------------------------------- */
 
@@ -115,6 +232,7 @@ void main_Init(void)  {
 	gfx_SetTextBGColor(COLOR_TRANS);
 	gfx_SetTextFGColor(COLOR_WHITE);
 	gfx_SetDrawBuffer();
+	
 	// Check for game external data. Immediately exit with error if any missing.
 	if (!RoFoDAT1_init()) main_Err(1);
 	if (!RoFoDAT2_init()) main_Err(2);
@@ -127,7 +245,6 @@ void main_Init(void)  {
 	gfx_SetPalette(ftiles_pal,sizeof_ftiles_pal,ftiles_palette_offset);
 	gfx_SetPaletteEntry(charequtiles_palette_offset,gfx_RGBTo1555(128,160,160)); //gunmetal gray
 	gfx_SetPalette(charequtiles_pal,sizeof_charequtiles_pal,charequtiles_palette_offset);
-	
 	// Initialize tiles and tilemap/struct
 	i = 0; do { tiles[i] = emptysprite; } while ((++i)&0xFF);
 	for (i=wallAbase; i<(wallAbase+6*3); ++i)	tiles[i] = util_InitNewSprite();
@@ -149,10 +266,63 @@ void main_Init(void)  {
     tilemap.y_loc       = 4;
     tilemap.x_loc       = 4;
 	tilemap.tiles		= tiles;
+	
+	//Initialize minimap colors
+	iptr = asm_SetTile2ColorStart();
+	for(i=0;i< 64;++i) iptr[i+  0] = COLOR_BLACK;		//wall tiles
+	for(i=0;i< 64;++i) iptr[i+ 64] = COLOR_WHITE;		//floor tiles
+	for(i=0;i<128;++i) iptr[i+128] = COLOR_LIGHTGRAY;	//temp assign for all sobjs
 }
 
 
 void main_Exit(void) {
 	gfx_End();
 }
+
+
+mobjdef_t pbase_fighter = {
+//	name field ,spriteobj ,scriptname 
+//	mhp,mmp,str,spd,smr,atk,def,blk,ref,snk,per,rwr,mdf,mat,fdf,fat,edf,eat,pdf,pat
+	{"Rawrs"   ,NULL      ,NULL,
+	 20,  6, 11, 12, 13,  1,  2,  3,  4,  5,  6,  7,  8,  9,  1,  2,  3,  4,  5,  6},
+};
+mobjdef_t pbase_mage = {
+//	name field ,spriteobj ,scriptname 
+//	mhp,mmp,str,spd,smr,atk,def,blk,ref,snk,per,rwr,mdf,mat,fdf,fat,edf,eat,pdf,pat
+	{"Rawrs"   ,NULL      ,NULL,
+	 20,  6, 11, 12, 13,  1,  2,  3,  4,  5,  6,  7,  8,  9,  1,  2,  3,  4,  5,  6},
+};
+
+void main_NewChar(uint8_t class) {
+	
+	//Init player stats
+	pbase = pbase_fighter;
+	pcalc = pbase;
+	memset(&pmobj,0,sizeof(pmobj));
+	pmobj.type = 0xFF;
+	pmobj.hp = pcalc.maxhp;
+	pmobj.mp = pcalc.maxmp;
+	//Init persistent stats
+	memset(&stats,0,sizeof(stats));
+	stats.start_sec = rtc_Seconds;
+	stats.start_min = rtc_Minutes;
+	stats.start_hour= rtc_Hours;
+	stats.worldseed = rtc_Time();
+	stats.forestarea= 0xFF;
+	stats.food = stats.hifood = 20;
+	//Init player mobj
+	memset(&pmobj,0,sizeof(pmobj));
+	//Init player inventories
+	memset(inventory,0,sizeof(inventory));
+	memset(equipment,0,sizeof(equipment));
+	memset(quickbar,0,sizeof(quickbar));
+	//Init overworld (this also loads initial map state)
+	gen_Overworld();
+	
+	
+	
+	
+	
+}
+
 
