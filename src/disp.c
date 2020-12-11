@@ -11,7 +11,7 @@
 #include "gfx/output/gfx_base.h"
 #include "gfx/output/gfx_charequtiles.h"
 
-
+void disp_drawquickbar(int basex, uint8_t basey);
 
 /* =========================================================================== */
 
@@ -110,6 +110,7 @@ uint8_t disp_Credits(uint8_t key) {
 #define QUICKSET_X	(SBAR_LEFT+0)
 #define QUICKSET_Y	(CURGEAR_Y+34+3)
 
+
 void disp_sidebarbar(int small, int large, uint8_t color, uint8_t y, char *s) {
 	int w1,w2;
 	if (large)	w1 = (small * 80) / large;
@@ -121,9 +122,26 @@ void disp_sidebarbar(int small, int large, uint8_t color, uint8_t y, char *s) {
 	gfx_SetColor(COLOR_DARKGRAY);
 	gfx_FillRectangle_NoClip(HPMP_X+2+w1,y,w2,9);
 	gfx_PrintStringXY(s,(HPMP_X+2)+(80-gfx_GetStringWidth(s))/2,y+1);
-	
 }
 
+void disp_sidebarbarhpmp(int lo, int hi, uint8_t color, uint8_t y) {
+	util_BufClr();
+	util_BufInt(lo,1);
+	util_BufChr('/');
+	util_BufInt(hi,1);
+	disp_sidebarbar(lo,hi,color,y,stringbuf);
+}
+
+void disp_sidebargear(uint8_t equslot, uint8_t y) {
+	void *itm,*spr;
+	
+	itm = &equipment[equslot];
+	spr = items_GetSprite(itm);
+	if (spr == equipicons_tiles[0]) spr = equipicons_tiles[equslot+1];
+	gfx_Sprite_NoClip(spr,CURGEAR_X,y);
+	gfx_SetTextXY(CURGEAR_X+18,y+1);
+	util_PrintF(items_GetName(itm));
+}
 
 void disp_Sidebar(uint8_t update) {
 	static uint8_t prevupdate;
@@ -156,25 +174,54 @@ void disp_Sidebar(uint8_t update) {
 	}
 	
 	if (u & UPD_XP) {
+		gfx_SetTextFGColor(COLOR_BLACK);
 		xphi = maxleveltable[stats.level];
 		xplo = (stats.level) ? (maxleveltable[stats.level-1]) : 0;
 		temp = (stats.xp - xplo) / (xphi - xplo) * 100;
 		util_BufClr();
-		if (stats.level>18) {
-			util_BufInt(temp,2);
+		if (stats.level<18) {
+			util_BufInt(temp,1);
 			util_BufStr("%  ");
 		}
 		util_BufStr("LV ");
 		util_BufInt(stats.level+1,1);
-		gfx_SetTextFGColor(COLOR_BLACK);
 		disp_sidebarbar(stats.xp-xplo,xphi-xplo,COLOR_GOLD,XPFOOD_Y+2,stringbuf);
 	}
 	if (u & UPD_FOOD) {
+		gfx_SetTextFGColor(COLOR_WHITE);
 		util_BufClr();
 		util_BufInt(stats.food,1);
-		gfx_SetTextFGColor(COLOR_WHITE);
 		disp_sidebarbar(stats.food, stats.hifood, COLOR_RED, XPFOOD_Y+21, stringbuf);
 	}
+	
+	if (u & UPD_MINI) {
+		gfx_SetTextFGColor(COLOR_WHITE);
+		gfx_SetTextXY(MAPAREA_X+1,MAPAREA_Y+11);
+		if (stats.dungeonid)	gfx_PrintUInt(stats.dungeonid,2);
+		else {
+			t = stats.forestarea-1;
+			gfx_PrintChar(t%5+'A');
+			gfx_PrintChar(t/5+'0');
+		}
+		gfx_SetTextXY(MAPFLOOR_X+1,MAPFLOOR_Y+11);
+		if (stats.dungeonid)	gfx_PrintUInt(stats.dungeonfloor,2);
+	}
+	if (u & (UPD_HP|UPD_MP)) {
+		gfx_SetTextFGColor(COLOR_WHITE);
+		mobj_RecalcPlayer();
+		disp_sidebarbarhpmp(pmobj.hp,pcalc.maxhp,COLOR_FORESTGREEN,HPMP_Y+2);
+		disp_sidebarbarhpmp(pmobj.mp,pcalc.maxmp,COLOR_BLUE,HPMP_Y+21);
+	}
+	
+	if (u & UPD_CURGEAR) {
+		disp_sidebargear(5,CURGEAR_Y);
+		disp_sidebargear(8,CURGEAR_Y+18);
+	}
+
+	if (u & UPD_QUICKSET) {
+		disp_drawquickbar(QUICKSET_X,(QUICKSET_Y + 8));
+	}
+	
 	prevupdate = update;
 }
 
@@ -199,7 +246,7 @@ uint8_t disp_Gamemode(uint8_t key) {
 	
 	u = 0;
 	if (key & kbit_Mode) return GS_TITLE;
-	
+	if (kb_Data[1] & (kb_Yequ|kb_Window|kb_Zoom)) return GS_MENUMODE;
 	//
 	//insert method of handling top row keypresses for menuing.
 	//or have that handled out in main.
@@ -228,7 +275,7 @@ uint8_t disp_Gamemode(uint8_t key) {
 	x = tx;
 	y = ty;
 	//END TESTING
-	
+	sobj_WriteToMap();
 	gfx_Tilemap(&tilemap,cx,cy);
 	
 	pmobj.x = x;
@@ -248,7 +295,6 @@ uint8_t disp_Gamemode(uint8_t key) {
 
 	
 	disp_Sidebar(u);
-	u = 0;
 	return GS_GAMEMODE;
 }
 
@@ -263,12 +309,246 @@ uint8_t disp_Gamemode(uint8_t key) {
 
 
 /* =========================================================================== */
+
+char* string_forestmap = "Forest Map";
+char* string_dungeonmap = "Dungeon Map";
+
+void disp_inventorycursor(uint8_t cursorpos) {
+	uint8_t t,y;
+	int x;
+	
+	t = cursorpos & 0x3F;
+	if (cursorpos & 0x80) {
+		x = 4+80+2+2+ 18*(t&1);
+		y = 4+2+2+    18*(t/2);
+	} else {
+		x = 4+80+2+36+14 + 18*(t%5);
+		y = 4+2+36+14+ 18*(t/5);
+	}
+	//Color is set outside this routine
+	gfx_HorizLine_NoClip(x,y-1,16);		//top line
+	gfx_HorizLine_NoClip(x,y+16,16);	//bottom line
+	gfx_VertLine_NoClip(x-1,y,16);		//left line
+	gfx_VertLine_NoClip(x+16,y,16);		//Right line
+}
+
+void disp_statdata(char *s, int base, int plus) {
+	gfx_PrintString(s);
+	if (base|plus) {
+		gfx_PrintUInt(base,2);
+		if (plus) {
+			if (plus<0) {
+				gfx_PrintChar('-');
+				plus = -plus;
+			} else 	gfx_PrintChar('+');
+			gfx_PrintUInt(plus,2);
+		}
+	}
+	gfx_SetTextXY(6,gfx_GetTextY() + 10);
+}
+
+void disp_statline(char *s, uint8_t offset) {
+	int base,plus;
+	if (offset) {
+		base = *(((int8_t*)&pbase)+offset);
+		plus = *(((int8_t*)&pcalc)+offset) - base;
+	} else {
+		base = plus = 0;
+	}
+	disp_statdata(s,base,plus);
+}
+
+
+
 uint8_t disp_Menumode(uint8_t key) {
+	static uint8_t state,cursor,prevcursor,isselected;
+	uint8_t i,j,k,u,a,c,t,x,y;
+	int cx,cy;
+	void *ptr,*ptrcmp;
 	
-	if (key & kbit_Mode) return GS_GAMEMODE;
+	u = 0;
+	mobj_RecalcPlayer();
+	if (key & kbit_Mode) {
+		if (isselected) {
+			cursor = prevcursor;
+			prevcursor = isselected = 0;
+		} else {
+			cursor = prevcursor = isselected = 0;
+			return GS_GAMEMODE;
+		}
+	}
+	k = kb_Data[1];
+	if (k & kb_Yequ) state = 0;
+	if (k & kb_Window) state = 1;
+	if (k & kb_Zoom) state = 2;
+	
+	gfx_SetColor(COLOR_BLACK);
+	gfx_FillRectangle_NoClip(0,228,320,12);
+	gfx_SetColor(COLOR_GUNMETALGRAY);
+	gfx_FillRectangle_NoClip(4,4,224,224);
+	gfx_SetTextFGColor(COLOR_WHITE);
+	gfx_SetTextXY(6,10);
+	// -------------------- Render inventory and stats ------------------------
+	if (!state) {
+		ptrcmp = equipicons_tiles[0];	//If item lookup OOR, result equ this.
+		//Stat summary
+		disp_statline("STR: ",offsetof(mobjdef_t,str));
+		disp_statline("AGI: ",offsetof(mobjdef_t,spd));
+		disp_statline("INT: ",offsetof(mobjdef_t,smrt));
+		gfx_SetTextXY(6,gfx_GetTextY() + 4);
+		disp_statline("ATK: ",offsetof(mobjdef_t,atk));
+		disp_statline("SNK: ",offsetof(mobjdef_t,snk));
+		disp_statline("RWR: ",offsetof(mobjdef_t,rawrs));
+		disp_statline("DEF: ",offsetof(mobjdef_t,def));
+		disp_statline("BLK: ",offsetof(mobjdef_t,blk));
+		disp_statline("REF: ",offsetof(mobjdef_t,refl));
+		gfx_SetTextXY(6,gfx_GetTextY() + 4);
+		disp_statline("MATK: ",offsetof(mobjdef_t,matk));
+		disp_statline("FATK: ",offsetof(mobjdef_t,fatk));
+		disp_statline("EATK: ",offsetof(mobjdef_t,eatk));
+		disp_statline("PATK: ",offsetof(mobjdef_t,patk));
+		gfx_SetTextXY(6,gfx_GetTextY() + 4);
+		disp_statline("MDEF: ",offsetof(mobjdef_t,mdef));
+		disp_statline("FDEF: ",offsetof(mobjdef_t,fdef));
+		disp_statline("EDEF: ",offsetof(mobjdef_t,edef));
+		disp_statline("PDEF: ",offsetof(mobjdef_t,pdef));
+		gfx_SetTextXY(6,gfx_GetTextY() + 4);
+		disp_statdata("S Pts: ",stats.spoints,0);
+		disp_statdata("T Pts: ",stats.tpoints,0);
+		//Keyboard interactions
+		if (key & kbit_2nd) {
+			if (isselected) {
+				//
+				// Perform action on item between cursor and prevcursor
+				//
+				mobj_RecalcPlayer();
+				u = UPD_SIDEBAR;
+			} else {
+				isselected = 1;
+				prevcursor = cursor;
+			}
+		}
+		if (key & kbit_Del) {
+			//
+			// If equipment selected, attempt removal to inventory
+			//
+			mobj_RecalcPlayer();
+			u = UPD_SIDEBAR;
+		}
+		if (key & (kbit_Up|kbit_Down|kbit_Left|kbit_Right)) {
+			t  = cursor & 0x3F;
+			if (cursor & 0x80) {
+				if ((key & kbit_Down ) && (t <  6))	cursor += 2;
+				if ((key & kbit_Up   ) && (t >  1))	cursor -= 2;
+				if ((key & kbit_Left ) && (t &  1))	cursor -= 1;
+				if  (key & kbit_Right) {
+					if (t & 1)	cursor = 0;
+					else		cursor+= 1;
+				}
+			} else {
+				i = t % 5;
+				if ((key & kbit_Down ) && (t < 30))	cursor += 5;
+				if ((key & kbit_Up   ) && (t >  4))	cursor -= 5;
+				if ((key & kbit_Right) && (i <  4))	cursor += 1;
+				if  (key & kbit_Left ) {
+					if (i)	cursor -= 1;
+					else	cursor = (0x80+7);
+				}
+			}
+		}
+		//Equipment
+		for (i=0; i<8; ++i) {
+			x = 4+80+4 + 18*(i&1);
+			y = (i>>1) * 18 + 4+4;
+			if (ptrcmp == (ptr=items_GetSprite(&equipment[i])))
+				ptr = equipicons_tiles[i+1];	//skip over blank default
+			gfx_Sprite_NoClip(ptr,x,y);
+		}
+		//Quickbar
+		disp_drawquickbar(4+80+2+36+14, 4+4);
+		
+		//Inventory
+		for (i=0; i<35; ++i) {
+			x = 4+80+2+36+14 + 18*(i%5);
+			y = 4+2+36+14+ 18*(i/5);
+			ptr = items_GetSprite(&inventory[i]);
+			if (i==34) ptr = equipicons_tiles[9]; //trashcan
+			gfx_Sprite_NoClip(ptr,x,y);
+		}
+		//UI background elements
+		gfx_SetColor(COLOR_DARKGRAY);
+		gfx_FillRectangle(123+4,6,4,77);	//vertical divider
+		gfx_FillRectangle(127+4,47,95,4);	//quick/inv divider
+		gfx_FillRectangle(82+4,79,45,4);	//equip/packs divider
+		//Render cursors
+		gfx_SetColor(COLOR_PURPLE);
+		if (isselected) {
+			disp_inventorycursor(prevcursor);
+			gfx_SetColor(COLOR_ORANGE);
+		}
+		disp_inventorycursor(cursor);
+		//Draw bottom bar description
+		gfx_SetTextXY(4,230);
+		if (cursor == 34) {
+			util_PrintUF("Trash can ~ Discard unwanted items here");
+		} else {
+			t = cursor & 0x3F;
+			ptr = ((cursor&0x80) ? (&equipment[t]) : (&inventory[t]));
+			util_PrintUF(items_GetName(ptr));
+			util_PrintUF(" ~ ");
+			util_PrintUF(items_GetDesc(ptr));
+		}
+		
+	// ---------------- Render dedicated stats and allocations ----------------
+	} else if (1==state) {
+		gfx_SetTextXY(4,230);
+		util_PrintUF("TODO: Stats, skills, and allocs");
+	// ------------------- Render forest and dungeon maps ---------------------
+	} else if (2==state) {
+		if (stats.dungeonid) {
+			//Dungeon map
+			
+			ptr = string_dungeonmap;
+		} else {
+			//Forest map
+			t = 0;
+			for (i=0,y=(4+24); i<5; ++i,y+=40) {
+				for (j=0,cx=(4+16); j<5; ++j,cx+=40) {
+					if (forestmap_seen[t]) {
+						gfx_SetColor(COLOR_FORESTGREEN);
+						a = forestmap[t];
+						if (a&FEX_NORTH)	gfx_FillRectangle_NoClip(cx+14,y-8 ,4,8);
+						if (a&FEX_SOUTH)	gfx_FillRectangle_NoClip(cx+14,y+32,4,8);
+						if (a&FEX_EAST)		gfx_FillRectangle_NoClip(cx+32,y+14,8,4);
+						if (a&FEX_WEST)		gfx_FillRectangle_NoClip(cx-8 ,y+14,8,4);
+						c = COLOR_FORESTGREEN;
+						if (((stats.timer>>3)&1)&&(t==(stats.forestarea-1)))
+							c = COLOR_GOLD;
+					} else {
+						c = COLOR_GRAY;
+						if (t==0x0C)	c = COLOR_RED;
+					}
+					gfx_SetColor(c);
+					gfx_FillRectangle_NoClip(cx,y,32,32);
+					gfx_SetTextFGColor(COLOR_WHITE);
+					gfx_SetTextXY(cx+4,y+4);
+					gfx_PrintChar(t%5+'A');
+					gfx_PrintChar(t/5+'1');
+					++t;
+				}
+			}
+			ptr = string_forestmap;
+		}
+		gfx_SetTextFGColor(COLOR_GOLD);
+		gfx_PrintStringXY(ptr,(224-gfx_GetStringWidth(ptr))/2+4,(4+8));
+		gfx_SetTextXY(4,230);
+		util_PrintUF("TODO: Forest maps AND dungeons ");
+	}
 	
 	
 	
+	
+	disp_Sidebar(u);
 	return GS_MENUMODE;
 }
 
@@ -284,5 +564,31 @@ uint8_t disp_Menumode(uint8_t key) {
 
 
 /* =========================================================================== */
+//Utilities or sections that are called more than once even if they ought
+//to belong inline with the routine it is found in
+
+
+void disp_drawquickbar(int basex, uint8_t basey) {
+	uint8_t i,y;
+	int x;
+	void *ptr;
+	for (i=0; i<10; ++i) {
+		x = basex + 18*(i%5);
+		y = basey + 18*(i/5);
+		if (equipicons_tiles[0] == (ptr = items_GetSprite(&quickbar[i])))
+			ptr = equipicons_tiles[i+10];	//skip over top row
+		gfx_Sprite_NoClip(ptr,x,y);
+	}
+}
+
+
+
+
+
+
+
+
+
+
 
 

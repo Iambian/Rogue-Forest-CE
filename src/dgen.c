@@ -55,7 +55,6 @@ void gen_WarpTo(uint8_t id) {
 		stats.dungeonid = dungeonid;
 		stats.dungeonfloor = floorid;
 	}
-	sobj_WriteToMap();
 	ptr = sobj_GetByDest(oldid);
 	if (ptr) {
 		pmobj.x = ((sobj_t*)ptr)->x;
@@ -83,6 +82,7 @@ void gen_Overworld(void) {
 	memset(forestmap_seen,0,sizeof forestmap_seen);
 	memcpy(forestmap,genoverworld_testforest,sizeof forestmap);
 	memcpy(dungeonmap,genoverworld_testdungeon,sizeof dungeonmap);
+	floorcount = 0;
 
 	//
 	// Generate 5x5 forestgrid and grid-to-dungeon mappings
@@ -338,6 +338,8 @@ floor_t *gen_MakeFloor(uint8_t floorid) {
 	floor->seed = rtc_Time();
 	floor->mobj_count = 0;
 	floor->sobj_count = 0;
+	sobj_Clear();
+	mobj_Clear();
 	
 	return floor;
 }

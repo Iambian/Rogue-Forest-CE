@@ -249,43 +249,26 @@ mobjdef_t *mobj_GetDef(mobj_t *mobj) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
 void mobj_RecalcPlayer(void) {
 	uint8_t i,j,offset;
-	int t,enchantval;
+	int value;
 	itemdef_t *item;
 	item_t *gear;
 	
-	/*
-	playercalc = playerbase;
-	return;	//Okay maybe memory is getting corrupted someplace
-	for (i = 0; i<8; ++i) {
-		if (equipment[i].type) {
-			gear = &equipment[i];
-			item = items_GetItemDef(gear);
-			offset = item->offset1;
-			t = item->modifier1;
-			dbg_sprintf(dbgout,"Iter %i, type %i, offset %i, mod %i\n",i,equipment[i].type,offset,t);
-			if (t) {
-				*(((uint8_t*)&playercalc)+offset) += t + ((item->enchantmult * gear->data * t)>>8);
-			}
-			offset = item->offset2;
-			t = item->modifier2;
-			if (t) {
-				*(((uint8_t*)&playercalc)+offset) += t + ((item->enchantmult * gear->data * t)>>8);
+	pcalc = pbase;
+	
+	for (i=0; i<(sizeof(equipment)/sizeof(item_t)); ++i) {
+		gear = &equipment[i];
+		if (gear->type) {
+			for (j=0; j<2; ++j) {
+				value  = items_GetStatValue(gear,j);
+				offset = items_GetStatOffset(gear,j);
+				if (value) {
+					*(((uint8_t*)&pcalc)+offset) += value;
+				}
 			}
 		}
 	}
-	*/
 }
 
 

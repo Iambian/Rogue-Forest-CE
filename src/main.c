@@ -58,7 +58,9 @@ int main(void) {
 	uint8_t i,k,state;
 	
 	main_Init();	//Setup game
-	state = 0;
+	state = GS_NEWGAME;
+	
+	
 	while (1) {
 		++stats.timer;
 		k = util_GetSK();
@@ -182,19 +184,23 @@ void util_BufTime(void) {
 	util_BufInt(cur_sec,2);
 }
 
-void util_PrintF(void) {
+void util_PrintF(char *s) {
 	int x;
-	uint8_t y;
-	char *s,c;
+	char c;
 	x = gfx_GetTextX();
-	s = stringbuf;
 	while ((c=(*s++))) {
 		if ('\n'==c)	gfx_SetTextXY(x,gfx_GetTextY()+8);
 		else			gfx_PrintChar(c);
 	}
 }
 
-
+void util_PrintUF(char *s) {
+	char c;
+	while ((c=(*s++))) {
+		if ('\n'==c) c = ' ';
+		gfx_PrintChar(c);
+	}
+}
 
 
 
@@ -253,8 +259,8 @@ void main_Init(void)  {
 	gfx_SetPalette(base_pal,sizeof_base_pal,ui_palette_offset);
 	gfx_SetPalette(dtiles_pal,sizeof_dtiles_pal,dtiles_palette_offset);
 	gfx_SetPalette(ftiles_pal,sizeof_ftiles_pal,ftiles_palette_offset);
-	gfx_SetPaletteEntry(charequtiles_palette_offset,gfx_RGBTo1555(128,160,160)); //gunmetal gray
 	gfx_SetPalette(charequtiles_pal,sizeof_charequtiles_pal,charequtiles_palette_offset);
+	gfx_SetPaletteEntry(charequtiles_palette_offset,gfx_RGBTo1555(128,160,160)); //gunmetal gray
 	// Initialize tiles and tilemap/struct
 	i = 0; do { tiles[i] = emptysprite; } while ((++i)&0xFF);
 	for (i=wallAbase; i<(wallAbase+6*3); ++i)	tiles[i] = util_InitNewSprite();
@@ -291,18 +297,19 @@ void main_Exit(void) {
 
 //Class may be values 245-255, matching with MOB definitions
 void main_NewChar(uint8_t class) {
+	uint8_t i,j;
 	
 	//Init player inventories
 	memset(inventory,0,sizeof(inventory));
 	memset(equipment,0,sizeof(equipment));
 	memset(quickbar,0,sizeof(quickbar));
 	//Init player stats
+	memset(&pmobj,0,sizeof(pmobj));
 	pmobj.type = 245;	//class goes here
 	pmobj.hp = pcalc.maxhp;
 	pmobj.mp = pcalc.maxmp;
 	memcpy(&pbase,mobj_GetDef(&pmobj),sizeof(pbase));
 	mobj_RecalcPlayer();
-	memset(&pmobj,0,sizeof(pmobj));
 	//Init persistent stats
 	memset(&stats,0,sizeof(stats));
 	stats.start_sec = rtc_Seconds;
@@ -315,6 +322,22 @@ void main_NewChar(uint8_t class) {
 	memset(&pmobj,0,sizeof(pmobj));
 	//Init overworld (this also loads initial map state)
 	gen_Overworld();
+	
+	//
+	// DEBUGGING STUFFS.
+	//
+	
+	/* DEBUGGING -- SET PLAYER INVENTORY WITH STUFFS */
+	
+	for (j=0,i=1;i<64;i+=4,++j) {
+		inventory[j].type = i;
+		inventory[j].data = 0;
+	}
+	inventory[4].data = 2;	//test enchantment display for top-right item
+	for (i=ITEM_CONSUMABLE; i < CONS_UNUSEDPOTION1 ; ++i,++j) {
+		inventory[j].type = i;
+		inventory[j].data = 1;
+	}
 	
 }
 

@@ -11,19 +11,13 @@
 #include "gfx/output/gfx_base.h"
 #include "gfx/output/gfx_charequtiles.h"
 
+char *items_StatDesc(uint8_t offset);
 
 
 
 #define fl2fx(x) (x*256)
 #define MD(member) offsetof(mobjdef_t,member)
 #define pstats_io(offset) *((uint8_t*)pstats+offset)
-
-
-char *item_noname = "Empty\nslot";
-char *item_nodesc = "Fill me with stuff!";
-char *item_illegal = "Illegal\nitem";
-char *item_illdesc = "Memory got corrupted.";
-char descbuf[80];
 
 
 /* 'name' is the empty entity with which to flag that this stat isn't available.

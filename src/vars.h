@@ -101,23 +101,27 @@ void 	asm_DrawTitleHead(gfx_sprite_t* sprite);
 #define sobj_Clear() sobjcount = 0;
 #define mobj_Clear() mobjcount = 0;
 #define moving_Clear() movingcount = 0;
-void sobj_Add(sobj_t *sobj);
-void mobj_Add(mobj_t *mobj);
-void sobj_Del(sobj_t *sobj);
-void mobj_Del(mobj_t *mobj);
-sobj_t *sobj_GetByPos(uint8_t x, uint8_t y);
-mobj_t *mobj_GetByPos(uint8_t x, uint8_t y);
-sobj_t *sobj_GetByDest(uint8_t warpid);
-uint8_t sobj_IsDoorable(uint8_t x, uint8_t y);
-void sobj_WriteToMap(void);
-mobjdef_t *mobj_GetDef(mobj_t *mobj);
-void mobj_RecalcPlayer(void);
-
-
-
+void	sobj_Add(sobj_t *sobj);
+void	mobj_Add(mobj_t *mobj);
+void	sobj_Del(sobj_t *sobj);
+void	mobj_Del(mobj_t *mobj);
+sobj_t	*sobj_GetByPos(uint8_t x, uint8_t y);
+mobj_t	*mobj_GetByPos(uint8_t x, uint8_t y);
+sobj_t	*sobj_GetByDest(uint8_t warpid);
+uint8_t	sobj_IsDoorable(uint8_t x, uint8_t y);
+void	sobj_WriteToMap(void);
+mobjdef_t	*mobj_GetDef(mobj_t *mobj);
+void	mobj_RecalcPlayer(void);
 
 
 /* Shared functions and variables in items.c */
+uint8_t		items_Filter(item_t *item);
+itemdef_t	*items_FilterDef(item_t *item);
+int			items_GetStatValue(item_t *item, uint8_t iter);
+uint8_t 	items_GetStatOffset(item_t *item, uint8_t iter);
+gfx_sprite_t *items_GetSprite(item_t *item);
+char 		*items_GetName(item_t *item);
+char 		*items_GetDesc(item_t *item);
 
 
 
@@ -125,16 +129,13 @@ void mobj_RecalcPlayer(void);
 void gen_WarpTo(uint8_t id);
 void gen_Overworld(void);
 
-//Moveto dgen.c when finished with transcription
-
-
 
 /* Shared functions and variables in disp.c */
-uint8_t disp_Title(uint8_t key);	//returns new state of game
-uint8_t disp_Credits(uint8_t key);
-void disp_Sidebar(uint8_t update);
-uint8_t disp_Gamemode(uint8_t key);
-uint8_t disp_Menumode(uint8_t key);
+uint8_t	disp_Title(uint8_t key);	//returns new state of game
+uint8_t	disp_Credits(uint8_t key);
+void	disp_Sidebar(uint8_t update);
+uint8_t	disp_Gamemode(uint8_t key);
+uint8_t	disp_Menumode(uint8_t key);
 
 
 
@@ -169,7 +170,8 @@ void	util_BufStr(char *s);
 void	util_BufChr(char c);
 void	util_BufInt(int num, uint8_t numzeroes);
 void	util_BufTime(void);
-void	util_PrintF(void);
+void	util_PrintF(char *s);
+void	util_PrintUF(char *s);
 
 
 
