@@ -122,8 +122,9 @@ uint8_t 	items_GetStatOffset(item_t *item, uint8_t iter);
 gfx_sprite_t *items_GetSprite(item_t *item);
 char 		*items_GetName(item_t *item);
 char 		*items_GetDesc(item_t *item);
-
-
+item_t		*items_GetPtrFromCursor(uint8_t cursor);
+uint8_t		items_SwapSlots(uint8_t cursor1, uint8_t cursor2);
+item_t		*items_FindEmptySlot(void);
 
 /* Shared functions and variables in dgen.c */
 void gen_WarpTo(uint8_t id);
@@ -172,6 +173,7 @@ void	util_BufInt(int num, uint8_t numzeroes);
 void	util_BufTime(void);
 void	util_PrintF(char *s);
 void	util_PrintUF(char *s);
+void	util_MemSwap(void *ptr1, void *ptr2, size_t size);
 
 
 

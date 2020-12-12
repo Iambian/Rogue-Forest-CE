@@ -202,6 +202,16 @@ void util_PrintUF(char *s) {
 	}
 }
 
+void util_MemSwap(void *ptr1, void *ptr2, size_t size) {
+	uint8_t t;
+	for (;size;--size) {
+		t = *(uint8_t*)ptr1;
+		*(uint8_t*)ptr1 = *(uint8_t*)ptr2;
+		*(uint8_t*)ptr2 = t;
+		ptr1 = (uint8_t*)ptr1 + 1;
+		ptr2 = (uint8_t*)ptr2 + 1;
+	}
+}
 
 
 

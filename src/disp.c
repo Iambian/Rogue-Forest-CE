@@ -30,7 +30,7 @@ uint8_t disp_Title(uint8_t key) {
 	if (key&kbit_Mode)	return 4;
 	
 	gfx_FillScreen(COLOR_FORESTGREEN);
-	zx7_Decompress(gfx_vbuffer,rofotitle_compressed);
+	zx7_Decompress(gfx_vbuffer,rofotitle3_compressed);
 	gfx_SetTextScale(2,2);
 	for (i=0,y=100; i<4; ++i,y+=24) {
 		s = disp_title_menu[i];
@@ -201,7 +201,7 @@ void disp_Sidebar(uint8_t update) {
 		else {
 			t = stats.forestarea-1;
 			gfx_PrintChar(t%5+'A');
-			gfx_PrintChar(t/5+'0');
+			gfx_PrintChar(t/5+'1');
 		}
 		gfx_SetTextXY(MAPFLOOR_X+1,MAPFLOOR_Y+11);
 		if (stats.dungeonid)	gfx_PrintUInt(stats.dungeonfloor,2);
@@ -309,6 +309,8 @@ uint8_t disp_Gamemode(uint8_t key) {
 
 
 /* =========================================================================== */
+
+
 
 char* string_forestmap = "Forest Map";
 char* string_dungeonmap = "Dungeon Map";
@@ -418,20 +420,24 @@ uint8_t disp_Menumode(uint8_t key) {
 		//Keyboard interactions
 		if (key & kbit_2nd) {
 			if (isselected) {
-				//
-				// Perform action on item between cursor and prevcursor
-				//
-				mobj_RecalcPlayer();
-				u = UPD_SIDEBAR;
+				if (items_SwapSlots(cursor,prevcursor)) {
+					prevcursor = isselected = 0;
+					mobj_RecalcPlayer();
+					u = UPD_SIDEBAR;
+				}
 			} else {
 				isselected = 1;
 				prevcursor = cursor;
 			}
 		}
 		if (key & kbit_Del) {
-			//
-			// If equipment selected, attempt removal to inventory
-			//
+			ptr = items_FindEmptySlot();
+			if (ptr && (cursor&0x80)) {
+				t = cursor & 0x3F;
+				*(item_t*)ptr = equipment[t];
+				equipment[t].type = 0;
+				equipment[t].data = 0;
+			}
 			mobj_RecalcPlayer();
 			u = UPD_SIDEBAR;
 		}

@@ -100,9 +100,10 @@ converts:
   - name: title
     palette: base_pal
     palette-offset: 0
+    width-and-height: false
     compress: zx7
     images:
-      - ui/rofotitle.png
+      - ui/rofotitle3.png
       
   - name: dtiles
     palette: dtiles_pal

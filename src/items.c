@@ -228,12 +228,56 @@ char *items_GetDesc(item_t *item) {
 		return consumenames[t-ITEM_CONSUMABLE][1];
 	}
 }
+/* bit 7 = in equipment, bit 6 = in quickbar. undefined if both set */
+item_t *items_GetPtrFromCursor(uint8_t cursor) {
+	uint8_t t;
+	t = cursor & 0x3F;
+	if (cursor & 0x80) return &equipment[t];
+	if (cursor & 0x40) return &quickbar[t];
+	return &inventory[t];
+}
 
 
+uint8_t items_verifygeartable[] = {EFL_RNG,EFL_RNG,EFL_HAT,EFL_ARM,EFL_GLO,EFL_WPN,EFL_BTS,EFL_2ND};
+uint8_t items_verifygear(uint8_t cursor) {
+	uint8_t t;
+	item_t *item;
+	
+	item = items_GetPtrFromCursor(cursor);
+	t = cursor & 0x3F;
+	if (cursor & 0x80) {
+		if (!item->type) return 1;
+		if (items_FilterDef(item)->type & items_verifygeartable[t]) return 1;
+		return 0;
+	}
+	if (cursor & 0x40) {
+		if ((item->type >= ITEM_CONSUMABLE) && (item->type < CONS_CONSUMABLE_END))
+			return 1;
+		return 0;
+	}
+	return 1;
+}
 
+uint8_t items_SwapSlots(uint8_t cursor1, uint8_t cursor2) {
+	item_t *item1,*item2;
+	
+	item1 = items_GetPtrFromCursor(cursor1);
+	item2 = items_GetPtrFromCursor(cursor2);
+	util_MemSwap(item1,item2,sizeof(item_t));
+	if (items_verifygear(cursor1) && items_verifygear(cursor2)) return 1;
+	util_MemSwap(item1,item2,sizeof(item_t));
+	return 0;
+}
 
-
-
+item_t *items_FindEmptySlot(void) {
+	uint8_t i;
+	item_t *item;
+	
+	for (i=0; i<34; ++i) {	//34, not 35 to avoid trashcan slot
+		if (!((item=&inventory[i])->type)) return item;
+	}
+	return NULL;
+}
 
 
 

@@ -296,6 +296,7 @@ _asm_GetNumpad:
       cpl
       add   a,10+1
       ret
+db 0  ;for smc purposes
 getnumpad_datatable:
 ;  1  2  3  4  5  6  7  8  9  0
 db 34,26,18,35,27,19,36,28,20,33
