@@ -4,6 +4,7 @@
 #define VERSION "0.02"
 #define gfx_SetPaletteEntry(offset,color1555) ((uint16_t*)0xE30200)[offset] = color1555;
 #define abs(x) ((x<0)?(-x):x)
+#define CLIPPING 1
 /* ------------------------------ Colors -------------------------- */
 #define COLOR_BLACK				0
 #define COLOR_WHITE				1

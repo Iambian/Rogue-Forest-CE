@@ -281,6 +281,7 @@ db $40,$48,$47,$47,$40,$48,$47,$47,$41,$41,$48,$48,$41,$41,$48,$48
 ;returns 0 for no press. 1-10 for keys [1-9,0]. Blocks until keyrelease
 _asm_GetNumpad:
       push  ix
+            ld    iy,flags
             call  _KbdScan
             call  _GetCSC
       pop   ix
@@ -296,7 +297,6 @@ _asm_GetNumpad:
       cpl
       add   a,10+1
       ret
-db 0  ;for smc purposes
 getnumpad_datatable:
 ;  1  2  3  4  5  6  7  8  9  0
 db 34,26,18,35,27,19,36,28,20,33

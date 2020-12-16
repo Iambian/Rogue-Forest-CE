@@ -11,6 +11,8 @@
 #include "gfx/output/gfx_base.h"
 #include "gfx/output/gfx_charequtiles.h"
 
+char footerbuf[100];
+
 void disp_drawquickbar(int basex, uint8_t basey);
 
 /* =========================================================================== */
@@ -150,9 +152,6 @@ void disp_Sidebar(uint8_t update) {
 	
 	u = update | prevupdate;
 	
-	//Always update the minimap
-	asm_LoadMinimap(pmobj.x,pmobj.y);
-	
 	if (u & UPD_BACKERS) {	//The whole background parts of the sidebar
 		// the overall background
 		gfx_SetColor(COLOR_DARKGRAY);
@@ -215,13 +214,16 @@ void disp_Sidebar(uint8_t update) {
 	
 	if (u & UPD_CURGEAR) {
 		disp_sidebargear(5,CURGEAR_Y);
-		disp_sidebargear(8,CURGEAR_Y+18);
+		disp_sidebargear(7,CURGEAR_Y+18);
 	}
 
 	if (u & UPD_QUICKSET) {
 		disp_drawquickbar(QUICKSET_X,(QUICKSET_Y + 8));
 	}
-	
+
+	//Always update the minimap
+	asm_LoadMinimap(pmobj.x,pmobj.y);
+	//Maintain the chain
 	prevupdate = update;
 }
 
@@ -232,6 +234,8 @@ void disp_Sidebar(uint8_t update) {
 
 /* =========================================================================== */
 
+
+
 uint8_t disp_clampcoord(uint8_t coord) {
 	uint8_t c;
 	c = coord-7;
@@ -240,59 +244,92 @@ uint8_t disp_clampcoord(uint8_t coord) {
 	return c;
 }
 
+#define disp_mapdelta(dx,dy) (curmap->data[(ty+(dy*CLIPPING))*128+(tx+(dx*CLIPPING))])
+
 uint8_t disp_Gamemode(uint8_t key) {
-	uint8_t u,i,j,k,x,y,tx,ty;
-	int cx,cy,px,py,ex,ey;
+	uint8_t u,i,j,k,x,y,tx,ty,pass;
+	int cx,cy,px,py,ex,ey,dx,dy;
+	void *ptr,*spr;
+	mobj_t *mobj;
 	
-	u = 0;
+	pass = u = 0;
 	if (key & kbit_Mode) return GS_TITLE;
 	if (kb_Data[1] & (kb_Yequ|kb_Window|kb_Zoom)) return GS_MENUMODE;
-	//
-	//insert method of handling top row keypresses for menuing.
-	//or have that handled out in main.
-	//or handle just one here then make the user switch modes
-	//once you get to the menumode. idk. figure it out and
-	//make it not suck.
-	//
 	key |= kb_Data[7];	//merge momentaries with persistent arrows
 	
 	tx = x = pmobj.x;
 	ty = y = pmobj.y;
-	if (key & kbit_Left)	--tx;
-	if (key & kbit_Right)	++tx;
-	if (key & kbit_Up)		--ty;
-	if (key & kbit_Down)	++ty;
+	
+	//Move and slide against walls if possible.
+	if ((key & kbit_Left ) && (tx > 0x00)) {
+		if (disp_mapdelta(-1, 0) > 0x3F) --tx;
+		stats.facing = 8;
+	}
+	if ((key & kbit_Right) && (tx < 0x7F)) {
+		if (disp_mapdelta( 1, 0) > 0x3F) ++tx;
+		stats.facing = 4;
+	}
+	if ((key & kbit_Up   ) && (ty > 0x00)) {
+		if (disp_mapdelta( 0,-1) > 0x3F) --ty;
+		stats.facing = 12;
+	}
+	if ((key & kbit_Down ) && (ty < 0x7F)) {
+		if (disp_mapdelta( 0, 1) > 0x3F) ++ty;
+		stats.facing = 0;
+	}
 	
 	//
-	// direction handly stuff
+	//Add collision detection and reset tx,ty if movement is disallowed. The
+	//resetting thing is important because of mobj_PushMove pmobj.
 	//
 	
-	
+	sobj_WriteToMap();
+	movingcount = 0;
+	if ((tx != x) || (ty != y) || pass) {
+		mobj_PushMove(&pmobj,tx,ty);	//modifies pmobj x and y
+		//
+		//Insert movement actions for enemies.
+		//
+	}
+
+	/******** THIS IS WHERE THE RENDERING HAPPENS  *********/
+	i = (movingcount) ? 4 : 1;	//If any moving, 4. If not, do still frame of 1.
+	pass = i;					//Will also take this value for delta divider
 	cx = disp_clampcoord(pmobj.x) * 16;
 	cy = disp_clampcoord(pmobj.y) * 16;
+	gfx_SetClipRegion(4,4,4+224,4+224);
+	tilemap.draw_height = tilemap.draw_width = 15;
+	for (; i; --i) {
+		if (i==3) {
+			//Keep the other areas onscreen stable during multiframe draw
+			gfx_BlitRectangle(gfx_screen,0,LCD_HEIGHT-12,LCD_WIDTH,12);
+			gfx_BlitRectangle(gfx_screen,MINIMAP_X,MINIMAP_Y,66,66);
+		}
+		if (i==1) {
+			//Final frame. Prepare for final positions
+			tilemap.draw_height = tilemap.draw_width = 14;
+			movingcount = 0;
+			
+		}
+		//render.
+		
+		
+		gfx_Tilemap(&tilemap,cx,cy);
+		
+		
+	}
+	gfx_SetClipRegion(0,0,320,240);
 	
-	//BEGIN TESTING
-	x = tx;
-	y = ty;
-	//END TESTING
-	sobj_WriteToMap();
-	gfx_Tilemap(&tilemap,cx,cy);
 	
-	pmobj.x = x;
-	pmobj.y = y;
-	
-	gfx_SetColor(COLOR_BLACK);
-	gfx_SetTextFGColor(COLOR_WHITE);
-	gfx_SetTextXY(4,LCD_HEIGHT-10);
-	gfx_FillRectangle(4,LCD_HEIGHT-10,LCD_WIDTH-4,8);
-	util_BufClr();
-	util_BufStr("Positions: (");
-	util_BufInt(pmobj.x,2);
-	util_BufChr(',');
-	util_BufInt(pmobj.y,1);
-	util_BufChr(')');
-	gfx_PrintStringXY(stringbuf,4,LCD_HEIGHT-10);
-
+	if (!*footerbuf) {
+		util_BufClr();
+		util_BufStr("Positions: (");
+		util_BufInt(pmobj.x,2);
+		util_BufChr(',');
+		util_BufInt(pmobj.y,1);
+		util_BufChr(')');
+		util_BufToFooter();
+	}
 	
 	disp_Sidebar(u);
 	return GS_GAMEMODE;
@@ -379,13 +416,11 @@ uint8_t disp_Menumode(uint8_t key) {
 			return GS_GAMEMODE;
 		}
 	}
-	k = kb_Data[1];
-	if (k & kb_Yequ) state = 0;
-	if (k & kb_Window) state = 1;
-	if (k & kb_Zoom) state = 2;
+	k = kb_Data[1];	//toprow should last long enough from gamemode to twig this.
+	if (k & kb_Yequ) state = 0;		//because most ppl can't do 60fps keyboarding
+	if (k & kb_Window) state = 1;	//but nbd if they actually can. it's just one
+	if (k & kb_Zoom) state = 2;		//lost frame. not like ppl are gonna speedrun this.
 	
-	gfx_SetColor(COLOR_BLACK);
-	gfx_FillRectangle_NoClip(0,228,320,12);
 	gfx_SetColor(COLOR_GUNMETALGRAY);
 	gfx_FillRectangle_NoClip(4,4,224,224);
 	gfx_SetTextFGColor(COLOR_WHITE);
@@ -462,6 +497,11 @@ uint8_t disp_Menumode(uint8_t key) {
 				}
 			}
 		}
+		k = asm_GetNumpad();
+		if (k && k<=10) {
+			items_SwapSlots((k-1)+0x40,cursor);
+			u |= UPD_QUICKSET;
+		}
 		//Equipment
 		for (i=0; i<8; ++i) {
 			x = 4+80+4 + 18*(i&1);
@@ -494,21 +534,20 @@ uint8_t disp_Menumode(uint8_t key) {
 		}
 		disp_inventorycursor(cursor);
 		//Draw bottom bar description
-		gfx_SetTextXY(4,230);
 		if (cursor == 34) {
-			util_PrintUF("Trash can ~ Discard unwanted items here");
+			strcat(footerbuf,"Trash can ~ Discard unwanted items here");
 		} else {
 			t = cursor & 0x3F;
 			ptr = ((cursor&0x80) ? (&equipment[t]) : (&inventory[t]));
-			util_PrintUF(items_GetName(ptr));
-			util_PrintUF(" ~ ");
-			util_PrintUF(items_GetDesc(ptr));
+			strcpy(footerbuf,items_GetName(ptr));
+			strcat(footerbuf," ~ ");
+			strcat(footerbuf,items_GetDesc(ptr));
 		}
 		
 	// ---------------- Render dedicated stats and allocations ----------------
 	} else if (1==state) {
 		gfx_SetTextXY(4,230);
-		util_PrintUF("TODO: Stats, skills, and allocs");
+		strcpy(footerbuf,"TODO: Stats, skills, and allocs");
 	// ------------------- Render forest and dungeon maps ---------------------
 	} else if (2==state) {
 		if (stats.dungeonid) {
@@ -547,12 +586,8 @@ uint8_t disp_Menumode(uint8_t key) {
 		}
 		gfx_SetTextFGColor(COLOR_GOLD);
 		gfx_PrintStringXY(ptr,(224-gfx_GetStringWidth(ptr))/2+4,(4+8));
-		gfx_SetTextXY(4,230);
-		util_PrintUF("TODO: Forest maps AND dungeons ");
+		strcpy(footerbuf,"TODO: Forest maps AND dungeons ");
 	}
-	
-	
-	
 	
 	disp_Sidebar(u);
 	return GS_MENUMODE;

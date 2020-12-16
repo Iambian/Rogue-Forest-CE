@@ -112,6 +112,8 @@ uint8_t	sobj_IsDoorable(uint8_t x, uint8_t y);
 void	sobj_WriteToMap(void);
 mobjdef_t	*mobj_GetDef(mobj_t *mobj);
 void	mobj_RecalcPlayer(void);
+uint8_t obj_Collide(mobj_t *imobj, uint8_t xpos, uint8_t ypos, uint8_t action);
+void	mobj_PushMove(mobj_t* mobj, uint8_t newx, uint8_t newy);
 
 
 /* Shared functions and variables in items.c */
@@ -147,6 +149,7 @@ extern gfx_sprite_t *tiles[256];	//768
 extern gfx_tilemap_t tilemap;
 extern stats_t stats;
 extern char stringbuf[100];
+extern char footerbuf[100];
 extern uint8_t tile2color[513];
 extern uint8_t forestmap_seen[25];
 extern uint8_t forestmap[25];
@@ -155,14 +158,26 @@ extern int maxleveltable[];
 extern item_t inventory[40];
 extern item_t equipment[8];
 extern item_t quickbar[10];
-extern mobj_t mobjtable[254];
 extern sobj_t sobjtable[254];
 extern room_t roomtable[100];
 extern floor_t floortable[254];
 extern moving_t movingtable[254];
 extern uint8_t mobjcount,sobjcount,roomcount,floorcount,movingcount;
-extern mobj_t pmobj;
 extern mobjdef_t pbase,pcalc;
+typedef struct mobjsplit_s {
+	mobj_t pmobj_b;
+	mobj_t mobjtable_b[254];
+} mobjsplit_t;
+typedef union mobjcomb_u {
+	mobj_t mobjtable_base[255];
+	mobjsplit_t mobjsplit;
+} mobjcomb_t;
+extern mobjcomb_t mobjcomb;
+#define mobjtable	(mobjcomb.mobjsplit.mobjtable_b)
+#define pmobj 		(mobjcomb.mobjsplit.pmobj_b)
+//extern mobj_t pmobj;
+//extern mobj_t mobjtable[254];
+
 
 uint8_t util_GetSK(void);
 #define util_BufClr() stringbuf[0] = 0;
@@ -174,7 +189,7 @@ void	util_BufTime(void);
 void	util_PrintF(char *s);
 void	util_PrintUF(char *s);
 void	util_MemSwap(void *ptr1, void *ptr2, size_t size);
-
+#define util_BufToFooter() strcpy(footerbuf,stringbuf);
 
 
 #endif

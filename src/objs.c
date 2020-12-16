@@ -271,12 +271,71 @@ void mobj_RecalcPlayer(void) {
 	}
 }
 
-
+/* ~~~~~~~~~~ Combined Object Recognition and Interaction Routines ~~~~~~~~~ */
+//action: kbit
+//returns: 0 = nothing is blocking, 1 = sobj blocking, 2 = mobj blocking
+//also returns: 0x80 + sobj->type for when object interact needs return
+uint8_t obj_Collide(mobj_t *imobj, uint8_t x, uint8_t y, uint8_t action) {
+	uint8_t i,t,ty,tyh,tyf;
+	void *ptr;
+	sobj_t *sobj;
+	mobj_t *mobj;
+	
+	mobj = mobj_GetByPos(x,y);
+	if (mobj) return 2;
+	
+	//atm using action key to ident between player and monsters.
+	//Monsters will never push Alpha.
+	ptr = &curmap[128*y+x];
+	t = *(uint8_t*)ptr;
+	if (t >= 0x80) {
+		sobj = sobj_GetByPos(x,y);
+		if (!sobj) return 0;	//well, then.
+		ty = sobj->type;
+		tyh= ty & SOBJTMSKHI;
+		tyf= ty & ~(SOBJTMSKLO|SOBJTMSKHI);
+		ty = ty ^ tyf;	//Always zero top bit so it doesn't interfere in typecheck
+		switch (tyh) {
+			case SOBJ_DOORBASE:
+			if (tyf) return 0;
+			if (ty == SOBJ_DOOR) { sobj->type |= 0x80; return 0; }
+			break;
+			
+			case SOBJ_WARPBASE:
+			if ((action & kbit_Alpha) && tyf) return 0x80|ty;
+			return 0;
+			break;
+			
+			case SOBJ_TRAPBASE:
+			return 0;
+			break;
+			
+			case SOBJ_CHESTBASE:
+			if ((action & kbit_Alpha) && tyf) return 0x80|ty;
+			return 0;
+			break;
+			
+			case SOBJ_ITEMBASE:
+			if ((action & kbit_Alpha) && tyf) return 0x80|ty;
+			return 0;
+			break;
+			
+			default:
+			break;
+		}
+		return 1;
+	}
+	return 0;
+}
+uint8_t obj_Interact(mobj_t mobj, uint8_t x, uint8_t y) {
+	
+	return 0;
+}
 
 
 /* ~~~~~~~~~~~~~~~~~~~~~~ Mobile Object Movement Routines ~~~~~~~~~~~~~~~~~~ */
 
-void mobj_pushmove(mobj_t* mobj, uint8_t newx, uint8_t newy) {
+void mobj_PushMove(mobj_t* mobj, uint8_t newx, uint8_t newy) {
 	int x,y;
 	moving_t *m;
 	
@@ -289,6 +348,8 @@ void mobj_pushmove(mobj_t* mobj, uint8_t newx, uint8_t newy) {
 	m->endy = newy*16;
 	mobj->x = newx;
 	mobj->y = newy;
+	mobj->flags |= MSTAT_ISMOVING;
+
 }
 
 uint8_t mobj_trymove(mobj_t *mobj, int8_t dx, int8_t dy) {
@@ -314,7 +375,7 @@ void mobj_basicmove(mobj_t *mobj) {
 		if (mobj_trymove(mobj,dx,0)) nx = nx+dx;
 		if (mobj_trymove(mobj,0,dy)) ny = ny+dy;
 		if ((nx != mobj->x) && (ny != mobj->y)) {
-			mobj_pushmove(mobj,nx,ny);
+			mobj_PushMove(mobj,nx,ny);
 			mobj->flags |= MSTAT_ISMOVING;
 		}
 	}
@@ -333,7 +394,7 @@ void mobj_zoomove(mobj_t *mobj) {
 	if (mobj_trymove(mobj,dx,0)) nx = nx+dx;
 	if (mobj_trymove(mobj,0,dy)) ny = ny+dy;
 	if ((nx != mobj->x) && (ny != mobj->y)) {
-		mobj_pushmove(mobj,nx,ny);
+		mobj_PushMove(mobj,nx,ny);
 		mobj->flags |= MSTAT_ISMOVING;
 	}
 }

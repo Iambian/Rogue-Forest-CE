@@ -24,7 +24,6 @@ uint8_t tile2color[513];
 item_t inventory[40];
 item_t equipment[8];
 item_t quickbar[10];
-mobj_t mobjtable[254];
 sobj_t sobjtable[254];
 room_t roomtable[100];
 floor_t floortable[254];
@@ -32,16 +31,14 @@ moving_t movingtable[254];
 uint8_t forestmap_seen[25];
 uint8_t forestmap[25];
 uint8_t dungeonmap[6];
-
-
 uint8_t mobjcount,sobjcount,roomcount,floorcount,movingcount;
-mobj_t pmobj;
 mobjdef_t pbase,pcalc;
 int maxleveltable[] = {
 	20,		40,		60,		80,		120,	200,	300,	450,	800,	1200,
 	1800,	3000,	4500,	7000,	9200,	13000,	18000,	25000,	34000,	60000
 };
-
+//Hacks to get pmobj to merge seamlessly to mobjtable
+mobjcomb_t mobjcomb;
 
 
 /* Function prototypes */
@@ -63,6 +60,7 @@ int main(void) {
 	
 	while (1) {
 		++stats.timer;
+		*footerbuf = 0;
 		k = util_GetSK();
 		
 		if (GS_TITLE == state) {			//Displays full menu. Returns state change.
@@ -90,6 +88,14 @@ int main(void) {
 			
 		} else state = GS_QUIT;				//Unhandled states immediately quits.
 		
+		if (state & (GS_GAMEMODE|GS_MENUMODE)) {
+			gfx_SetColor(COLOR_BLACK);
+			gfx_SetTextFGColor(COLOR_WHITE);
+			gfx_SetTextXY(4,LCD_HEIGHT-10);
+			gfx_FillRectangle(4,LCD_HEIGHT-10,LCD_WIDTH-4,8);
+			gfx_SetTextXY(4,LCD_HEIGHT-10);
+			util_PrintUF(footerbuf);
+		}
 		gfx_SwapDraw();
 	}
 	main_Exit();	//Perform putaway
@@ -205,16 +211,14 @@ void util_PrintUF(char *s) {
 void util_MemSwap(void *ptr1, void *ptr2, size_t size) {
 	uint8_t t;
 	for (;size;--size) {
+		//dbg_sprintf(dbgout,"Memswap iter %i, adr1 %X, adr2 %X\n",size,ptr1,ptr2);
 		t = *(uint8_t*)ptr1;
 		*(uint8_t*)ptr1 = *(uint8_t*)ptr2;
 		*(uint8_t*)ptr2 = t;
-		ptr1 = (uint8_t*)ptr1 + 1;
-		ptr2 = (uint8_t*)ptr2 + 1;
+		ptr1 = ((uint8_t*)ptr1) + 1;
+		ptr2 = ((uint8_t*)ptr2) + 1;
 	}
 }
-
-
-
 
 
 

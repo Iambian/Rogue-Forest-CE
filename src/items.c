@@ -24,7 +24,7 @@ char *items_StatDesc(uint8_t offset);
 	Alternatively, value being zero can be used for this in a more portable way */
 //Type/id is indexed by position in this array
 itemdef_t equipdefs[] = {
-	{"Empty\nItem"       ,EFL_MSC, fl2fx(1.0),   0, MD(name) ,   0,MD(name)},
+	{"Empty\nItem"       ,0      , fl2fx(0.0),   0, MD(name) ,   0,MD(name)},
 	//  item display name,equtype, enchantmlt,val1,   offset1,val2, offset2
 	{"Robe\n"            ,EFL_ARM, fl2fx(1.0),   4, MD(matk) ,   0,MD(name)},
 	{"Leather\nArmor"    ,EFL_ARM, fl2fx(1.0),   2, MD(def)  ,   0,MD(name)},
@@ -165,8 +165,8 @@ uint8_t items_itemdefoffsets[] = {offsetof(itemdef_t,offset1),offsetof(itemdef_t
 itemdef_t *items_FilterDef(item_t *item) { 
 	uint8_t t; 
 	t = items_Filter(item); 
-	if (!t || t >= EQU_EQUIPPABLE_END)	return &equipdefs[0]; //emptyitem
-	else 								return &equipdefs[t]; 
+	if ((!t) || (t >= EQU_EQUIPPABLE_END))	return &equipdefs[0]; //emptyitem
+	else 									return &equipdefs[t]; 
 }
 
 int items_GetStatValue(item_t *item, uint8_t iter) {	//Iter will either be 0 or 1.
@@ -244,9 +244,9 @@ uint8_t items_verifygear(uint8_t cursor) {
 	item_t *item;
 	
 	item = items_GetPtrFromCursor(cursor);
+	if (!item->type) return 1;
 	t = cursor & 0x3F;
 	if (cursor & 0x80) {
-		if (!item->type) return 1;
 		if (items_FilterDef(item)->type & items_verifygeartable[t]) return 1;
 		return 0;
 	}
