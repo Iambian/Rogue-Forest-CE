@@ -85,6 +85,8 @@ typedef struct stats_st {
 	uint8_t timer;
 	uint8_t mcguffins;
 	uint32_t worldseed;
+	int8_t	dx,dy;			//Passed from disp_Gamemode to mobj_playermove ordinarially
+	
 } stats_t;
 
 
@@ -114,6 +116,7 @@ mobjdef_t	*mobj_GetDef(mobj_t *mobj);
 void	mobj_RecalcPlayer(void);
 uint8_t obj_Collide(mobj_t *imobj, uint8_t xpos, uint8_t ypos, uint8_t action);
 void	mobj_PushMove(mobj_t* mobj, uint8_t newx, uint8_t newy);
+
 
 
 /* Shared functions and variables in items.c */
@@ -175,6 +178,7 @@ typedef union mobjcomb_u {
 extern mobjcomb_t mobjcomb;
 #define mobjtable	(mobjcomb.mobjsplit.mobjtable_b)
 #define pmobj 		(mobjcomb.mobjsplit.pmobj_b)
+#define allmobjs	(mobjcomb.mobjtable_base)
 //extern mobj_t pmobj;
 //extern mobj_t mobjtable[254];
 

@@ -20,6 +20,7 @@ gfx_sprite_t *curmap;
 gfx_tilemap_t tilemap;
 stats_t stats;
 char stringbuf[100];
+char footerbuf[100];
 uint8_t tile2color[513];
 item_t inventory[40];
 item_t equipment[8];

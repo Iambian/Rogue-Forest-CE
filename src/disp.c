@@ -11,8 +11,6 @@
 #include "gfx/output/gfx_base.h"
 #include "gfx/output/gfx_charequtiles.h"
 
-char footerbuf[100];
-
 void disp_drawquickbar(int basex, uint8_t basey);
 
 /* =========================================================================== */
@@ -283,42 +281,9 @@ uint8_t disp_Gamemode(uint8_t key) {
 	//resetting thing is important because of mobj_PushMove pmobj.
 	//
 	
-	sobj_WriteToMap();
-	movingcount = 0;
-	if ((tx != x) || (ty != y) || pass) {
-		mobj_PushMove(&pmobj,tx,ty);	//modifies pmobj x and y
-		//
-		//Insert movement actions for enemies.
-		//
-	}
-
-	/******** THIS IS WHERE THE RENDERING HAPPENS  *********/
-	i = (movingcount) ? 4 : 1;	//If any moving, 4. If not, do still frame of 1.
-	pass = i;					//Will also take this value for delta divider
-	cx = disp_clampcoord(pmobj.x) * 16;
-	cy = disp_clampcoord(pmobj.y) * 16;
-	gfx_SetClipRegion(4,4,4+224,4+224);
-	tilemap.draw_height = tilemap.draw_width = 15;
-	for (; i; --i) {
-		if (i==3) {
-			//Keep the other areas onscreen stable during multiframe draw
-			gfx_BlitRectangle(gfx_screen,0,LCD_HEIGHT-12,LCD_WIDTH,12);
-			gfx_BlitRectangle(gfx_screen,MINIMAP_X,MINIMAP_Y,66,66);
-		}
-		if (i==1) {
-			//Final frame. Prepare for final positions
-			tilemap.draw_height = tilemap.draw_width = 14;
-			movingcount = 0;
-			
-		}
-		//render.
-		
-		
-		gfx_Tilemap(&tilemap,cx,cy);
-		
-		
-	}
-	gfx_SetClipRegion(0,0,320,240);
+	stats.dx = (int8_t) tx - x;	//passthrough for actioning. Basic collision
+	stats.dy = (int8_t) ty - y;	//is done already.
+	
 	
 	
 	if (!*footerbuf) {

@@ -17,7 +17,7 @@ sobj_t emptysobj;
 
 void mobj_basicmove(mobj_t *mobj);
 void mobj_zoomove(mobj_t *mobj);
-
+void mobj_playermove(mobj_t *mobj);
 
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -25,9 +25,9 @@ void mobj_zoomove(mobj_t *mobj);
 mobjdef_t playerdef[] = {
 //	name field ,spriteobj ,scriptname 
 //	mhp,mmp,str,spd,smr,atk,def,blk,ref,snk,per,rwr,mdf,mat,fdf,fat,edf,eat,pdf,pat
-	{"Rawrs"   ,S_PLAYER0 ,NULL,
+	{"Rawrs"   ,S_PLAYER0 ,mobj_playermove,
 	 20,  6, 11, 12, 13,  1,  2,  3,  4,  5,  6,  7,  8,  9,  1,  2,  3,  4,  5,  6},
-	{"Rawrs"   ,S_PLAYER0 ,NULL,
+	{"Rawrs"   ,S_PLAYER0 ,mobj_playermove,
 	 20,  6, 11, 12, 13,  1,  2,  3,  4,  5,  6,  7,  8,  9,  1,  2,  3,  4,  5,  6},
 };
 
@@ -332,6 +332,52 @@ uint8_t obj_Interact(mobj_t mobj, uint8_t x, uint8_t y) {
 	return 0;
 }
 
+/* ~~~~~~~~~~~~~~~~~~~~~~~ Object Movement Processing ~~~~~~~~~~~~~~~~~~~~~~ */
+
+// The place we're going to implement turn-based movement, actions, and
+// rendering. Some of it ought to be in disp.c, but the bulk of it ought to
+// go here. So it is. Both for locality and to keep disp.c from being overweight.
+// Wink. wink. wonk.
+
+//Plan:
+//for each item in combined objects (allmobjs):
+//	if moving, add to moving queue
+//	if action, flush moving queue and start action animation/resolve
+//endfor
+//flush remaining moving queue
+
+//TODO: Remove half-built state from disp.c and submit a way to interact
+//with this routine such that the player can act or move
+
+uint8_t mobj_clampcoord(uint8_t coord) {
+	uint8_t c;
+	c = coord-7;
+	if (c>230) return 0;
+	if (c>113) return 113;
+	return c;
+}
+
+
+void mobj_RenderMap(uint8_t action) {
+	int plrx,plry,camx,camy,enmx,enmy;
+	
+	movingcount = 0;
+	
+	
+	//
+	//it'll be at this point you agonize over how to squeeze attack/actions
+	//out of a movement script then process it in its own thread. DF fun.
+	//
+	
+	
+	
+	
+	
+	
+	
+	
+}
+
 
 /* ~~~~~~~~~~~~~~~~~~~~~~ Mobile Object Movement Routines ~~~~~~~~~~~~~~~~~~ */
 
@@ -399,5 +445,9 @@ void mobj_zoomove(mobj_t *mobj) {
 	}
 }
 
-
+void mobj_playermove(mobj_t *mobj) {
+	if (stats.dx|stats.dy) {
+		mobj_PushMove(mobj, mobj->x + stats.dx , mobj->y + stats.dy);
+	}
+}
 
